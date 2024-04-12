@@ -14,3 +14,6 @@ Cargo.lock
 *.pdb
 
 .idea/
+/.env
+/node_modules
+/message.json
