@@ -1,21 +1,14 @@
+use chrono::Utc;
+use curl::easy::{Easy, List};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_json::Error;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
-use chrono::Utc;
-use curl::easy::{Easy, List};
 use url::Url;
 
 fn main() {
-    println!("hello world");
-    // read json file
-    // let file_path = "message.json";
-    // let json_data = read_json_file(file_path).unwrap();
-    // let message = parse_json(json_data);
-    // parse json
-    // SNS login
     let access_token = bluesky_login();
 
     // send message
@@ -23,7 +16,7 @@ fn main() {
         Ok(token) => {
             match bluesky_send_message(token) {
                 Ok(_) => println!("Message has been sent successfully."),
-                Err(err) => println!("Failed to send the message: {:?}", err)
+                Err(err) => println!("Failed to send the message: {:?}", err),
             };
         }
         Err(err) => {
@@ -68,8 +61,10 @@ pub struct BlueskyLoginCredentials {
 pub fn get_bluesky_account() -> BlueskyLoginCredentials {
     let _ = dotenvy::dotenv().expect("Failed to load .env file");
 
-    let identifier = env::var("BLUESKY_LOGIN_NAME").expect("Please set the BLUESKY_LOGIN_NAME environment variable");
-    let password = env::var("BLUESKY_APP_PASSWORD").expect("Please set the BLUESKY_APP_PASSWORD environment variable");
+    let identifier = env::var("BLUESKY_LOGIN_NAME")
+        .expect("Please set the BLUESKY_LOGIN_NAME environment variable");
+    let password = env::var("BLUESKY_APP_PASSWORD")
+        .expect("Please set the BLUESKY_APP_PASSWORD environment variable");
 
     BlueskyLoginCredentials {
         identifier,
@@ -90,7 +85,10 @@ pub fn bluesky_login() -> Result<AccessToken, curl::Error> {
     let post_data = get_bluesky_account();
     let binding = serde_json::to_string(&post_data).unwrap();
     let serialized = binding.as_bytes();
-    println!("POST data: {:?}", String::from_utf8(serialized.to_vec()).unwrap());
+    println!(
+        "POST data: {:?}",
+        String::from_utf8(serialized.to_vec()).unwrap()
+    );
 
     curl.post_fields_copy(serialized).unwrap();
     {
@@ -106,9 +104,8 @@ pub fn bluesky_login() -> Result<AccessToken, curl::Error> {
     let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
     println!("{}", res_json.to_string());
     Ok(AccessToken {
-        access_token: res_json["accessJwt"].to_string().replace("\"", "")
+        access_token: res_json["accessJwt"].to_string().replace("\"", ""),
     })
-    // Ok(res_string)
 }
 
 pub fn set_headers(header_list: Vec<String>) -> List {
@@ -154,22 +151,16 @@ pub fn bluesky_create_header(access_token: AccessToken) -> Vec<String> {
     let token: &str = access_token.access_token.as_str();
     println!("Authorization: Bearer {}", token);
     let auth_header: String = format!("Authorization: Bearer {}", token);
-    vec![
-        auth_header,
-        "Content-Type: application/json".to_string(),
-    ]
+    vec![auth_header, "Content-Type: application/json".to_string()]
 }
 
 pub fn bluesky_send_message(access_token: AccessToken) -> Result<bool, curl::Error> {
     let mut response_data = Vec::new();
     let mut curl = Easy::new();
-    curl.url("https://bsky.social/xrpc/com.atproto.repo.createRecord").unwrap();
+    curl.url("https://bsky.social/xrpc/com.atproto.repo.createRecord")
+        .unwrap();
     curl.post(true).unwrap();
 
-    // let headers: Vec<&str> = vec![
-    //     &format!("Authorization: Bearer {}", token),
-    //     "Content-Type: application/json",
-    // ];
     let headers = bluesky_create_header(access_token);
     let header_list = set_headers(headers);
     curl.http_headers(header_list).unwrap();
@@ -177,26 +168,25 @@ pub fn bluesky_send_message(access_token: AccessToken) -> Result<bool, curl::Err
     let post_data = set_bluesky_message();
     let binding = serde_json::to_string(&post_data).unwrap();
     let serialized = binding.as_bytes();
-    println!("POST data: {:?}", String::from_utf8(serialized.to_vec()).unwrap());
+    println!(
+        "POST data: {:?}",
+        String::from_utf8(serialized.to_vec()).unwrap()
+    );
 
     curl.post_fields_copy(serialized).unwrap();
     {
         let mut transfer = curl.transfer();
-        transfer.write_function(|data| {
-            response_data.extend_from_slice(data);
-            Ok(data.len())
-        }).unwrap();
+        transfer
+            .write_function(|data| {
+                response_data.extend_from_slice(data);
+                Ok(data.len())
+            })
+            .unwrap();
         transfer.perform().unwrap();
     }
     let res_string = String::from_utf8(response_data).unwrap();
     println!("{}", res_string);
-    // let sliced_res = res_string.as_str();
-    // let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
-    // println!("{}", res_json.to_string());
     Ok(true)
-    // Ok(AccessToken {
-    //     access_token: res_json["accessJwt"].to_string()
-    // })
 }
 
 pub fn bluesky_get_profile(access_token: AccessToken) -> String {
@@ -204,41 +194,41 @@ pub fn bluesky_get_profile(access_token: AccessToken) -> String {
     let mut curl = Easy::new();
     let env = get_bluesky_account();
     let queries = vec![("actor", env.identifier)];
-    let url_with_params = Url::parse_with_params("https://bsky.social/xrpc/app.bsky.actor.getProfile", queries).unwrap();
+    let url_with_params = Url::parse_with_params(
+        "https://bsky.social/xrpc/app.bsky.actor.getProfile",
+        queries,
+    )
+    .unwrap();
     curl.url(url_with_params.as_str()).unwrap();
 
     let headers = bluesky_create_header(access_token);
     let header_list = set_headers(headers);
     curl.http_headers(header_list).unwrap();
 
-
     {
         let mut transfer = curl.transfer();
-        transfer.write_function(|data| {
-            response_data.extend_from_slice(data);
-            Ok(data.len())
-        }).unwrap();
+        transfer
+            .write_function(|data| {
+                response_data.extend_from_slice(data);
+                Ok(data.len())
+            })
+            .unwrap();
         transfer.perform().unwrap();
     }
+
     let res_string = String::from_utf8(response_data).unwrap();
     println!("{}", res_string);
     res_string
-    // let sliced_res = res_string.as_str();
-    // let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
-    // println!("{}", res_json.to_string());
-
-    // Ok(res_string)
 }
 
 pub struct AccessToken {
-    access_token: String
+    access_token: String,
 }
-
 
 #[cfg(test)]
 mod tests {
-    use curl::easy::Easy;
     use super::*;
+    use curl::easy::Easy;
     use std::io::{stdout, Write};
 
     #[test]
