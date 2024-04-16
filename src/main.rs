@@ -6,12 +6,22 @@ use serde_json::Error;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
+use std::process::exit;
 use url::Url;
 
 fn main() {
-    let access_token = bluesky_login();
+    let args: Vec<String> = env::args().collect();
+    let mode: String = if args.len() == 2 {
+        args[1].clone()
+    } else {
+        String::from("")
+    };
+    if mode != "send" {
+        exit(0)
+    }
 
     // send message
+    let access_token = bluesky_login();
     match access_token {
         Ok(token) => {
             match bluesky_send_message(token) {
