@@ -35,10 +35,6 @@ fn main() {
     }
 }
 
-pub fn learn_main() -> bool {
-    true
-}
-
 pub fn read_json_file(file_path: &str) -> Result<Message, Error> {
     let file_path = file_path;
     let file = File::open(file_path).expect("File not found");
@@ -238,76 +234,6 @@ pub struct AccessToken {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use curl::easy::Easy;
-    use std::io::{stdout, Write};
-
-    #[test]
-    fn learn_bluesky_get_profile() {
-        let access_token = bluesky_login();
-
-        // send message
-        match access_token {
-            Ok(token) => {
-                bluesky_get_profile(token);
-            }
-            Err(err) => {
-                println!("Login failed.: {:?}", err)
-            }
-        }
-    }
-
-    #[test]
-    fn learn_bluesky_message() {
-        set_bluesky_message();
-    }
-
-    // #[test]
-    // fn learn_bluesky_send_message() {
-    //     let result = bluesky_send_message();
-    //     assert_eq!(true, result)
-    // }
-
-    #[test]
-    fn test_learn_main() {
-        assert_eq!(true, learn_main());
-    }
-
-    #[test]
-    fn learn_value() {
-        let data = read_json_file("./tests/resources/message.json").unwrap();
-        println!("{}", data.sender)
-
-        // if let Some(sender) = data.get("sender") {
-        //     println!("Sender -> {}", sender)
-        // } else {
-        //     println!("Sender not found")
-        // }
-    }
-
-    #[test]
-    fn learn_env() {
-        let _ = dotenvy::dotenv();
-
-        // for (key, value) in env::vars() {
-        //     println!("{key}: {value}");
-        // }
-        match env::var("BLUESKY_APP_PASSWORD") {
-            Ok(val) => println!("{val:?}"),
-            Err(e) => println!("err: {e}"),
-        }
-    }
-
-    #[test]
-    fn learn_curl() -> Result<(), curl::Error> {
-        let mut curl = Easy::new();
-        curl.url("https://bsky.social/xrpc/com.atproto.server.createSession")?;
-        curl.write_function(|data| {
-            stdout().write_all(data).unwrap();
-            Ok(data.len())
-        })?;
-        curl.perform()?;
-        Ok(())
-    }
 
     #[test]
     fn can_read_json_file() {
@@ -317,22 +243,4 @@ mod tests {
         assert_eq!(result.receivers.len(), 1);
         assert!(result.receivers.contains(&Receivers::BlueSky));
     }
-
-    #[test]
-    fn learn_bluesky_login() {
-        bluesky_login().unwrap();
-    }
-
-    // Can 'login' to bluesky
-    // #[test]
-    // fn cat_bluesky_login() {
-    //     let result = bluesky_login().unwrap();
-    //     assert_eq!("OK", result)
-    // }
-
-    // Can post to bluesky
-    // Failed to load JSON file
-    // Failed to convert JSON file into Message type
-    // Failed to log in
-    // Retrieve error when failed to post
 }
