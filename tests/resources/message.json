@@ -1,0 +1,6 @@
+{
+  "content": "Test message",
+  "sender": "user1",
+  "receivers": ["BlueSky"]
+}
+
