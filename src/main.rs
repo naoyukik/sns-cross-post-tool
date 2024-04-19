@@ -236,84 +236,85 @@ mod bluesky {
         let auth_header: String = format!("Authorization: Bearer {}", token);
         vec![auth_header, "Content-Type: application/json".to_string()]
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::bluesky::{get_profile, set_post_message};
-    use curl::easy::Easy;
-    use std::io::{stdout, Write};
+    #[cfg(test)]
+    mod tests {
+        use crate::Receivers;
+        use super::*;
+        use crate::bluesky::{get_profile, set_post_message};
+        use curl::easy::Easy;
+        use std::io::{stdout, Write};
 
-    #[test]
-    fn learn_bluesky_get_profile() {
-        let access_token = login();
+        #[test]
+        fn learn_bluesky_get_profile() {
+            let access_token = login();
 
-        // send message
-        match access_token {
-            Ok(token) => {
-                get_profile(&token);
-            }
-            Err(err) => {
-                println!("Login failed.: {:?}", err)
+            // send message
+            match access_token {
+                Ok(token) => {
+                    get_profile(&token);
+                }
+                Err(err) => {
+                    println!("Login failed.: {:?}", err)
+                }
             }
         }
-    }
 
-    #[test]
-    fn learn_bluesky_message() {
-        set_post_message();
-    }
-
-    // #[test]
-    // fn learn_bluesky_send_message() {
-    //     let result = bluesky_send_message();
-    //     assert_eq!(true, result)
-    // }
-
-    #[test]
-    fn learn_value() {
-        let data = read_json_file("./tests/resources/message.json").unwrap();
-        println!("{}", data.sender)
-
-        // if let Some(sender) = data.get("sender") {
-        //     println!("Sender -> {}", sender)
-        // } else {
-        //     println!("Sender not found")
-        // }
-    }
-
-    #[test]
-    fn learn_env() {
-        let _ = dotenvy::dotenv();
-
-        // for (key, value) in env::vars() {
-        //     println!("{key}: {value}");
-        // }
-        match env::var("BLUESKY_APP_PASSWORD") {
-            Ok(val) => println!("{val:?}"),
-            Err(e) => println!("err: {e}"),
+        #[test]
+        fn learn_bluesky_message() {
+            set_post_message();
         }
-    }
 
-    #[test]
-    fn learn_curl() -> Result<(), curl::Error> {
-        let mut curl = Easy::new();
-        curl.url("https://bsky.social/xrpc/com.atproto.server.createSession")?;
-        curl.write_function(|data| {
-            stdout().write_all(data).unwrap();
-            Ok(data.len())
-        })?;
-        curl.perform()?;
-        Ok(())
-    }
+        // #[test]
+        // fn learn_bluesky_send_message() {
+        //     let result = bluesky_send_message();
+        //     assert_eq!(true, result)
+        // }
 
-    #[test]
-    fn can_read_json_file() {
-        let result = read_json_file("./tests/resources/message.json").unwrap();
-        assert_eq!(result.content, "Test message");
-        assert_eq!(result.sender, "user1");
-        assert_eq!(result.receivers.len(), 1);
-        assert!(result.receivers.contains(&Receivers::BlueSky));
+        #[test]
+        fn learn_value() {
+            let data = read_json_file("./tests/resources/message.json").unwrap();
+            println!("{}", data.sender)
+
+            // if let Some(sender) = data.get("sender") {
+            //     println!("Sender -> {}", sender)
+            // } else {
+            //     println!("Sender not found")
+            // }
+        }
+
+        #[test]
+        fn learn_env() {
+            let _ = dotenvy::dotenv();
+
+            // for (key, value) in env::vars() {
+            //     println!("{key}: {value}");
+            // }
+            match env::var("BLUESKY_APP_PASSWORD") {
+                Ok(val) => println!("{val:?}"),
+                Err(e) => println!("err: {e}"),
+            }
+        }
+
+        #[test]
+        fn learn_curl() -> Result<(), curl::Error> {
+            let mut curl = Easy::new();
+            curl.url("https://bsky.social/xrpc/com.atproto.server.createSession")?;
+            curl.write_function(|data| {
+                stdout().write_all(data).unwrap();
+                Ok(data.len())
+            })?;
+            curl.perform()?;
+            Ok(())
+        }
+
+        #[test]
+        fn can_read_json_file() {
+            let result = read_json_file("./tests/resources/message.json").unwrap();
+            assert_eq!(result.content, "Test message");
+            assert_eq!(result.sender, "user1");
+            assert_eq!(result.receivers.len(), 1);
+            assert!(result.receivers.contains(&Receivers::BlueSky));
+        }
     }
 }
