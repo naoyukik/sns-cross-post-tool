@@ -24,7 +24,7 @@ fn main() {
     let access_token = login();
     match access_token {
         Ok(token) => {
-            match send_message(token) {
+            match send_message(&token) {
                 Ok(_) => println!("Message has been sent successfully."),
                 Err(err) => println!("Failed to send the message: {:?}", err),
             };
@@ -77,42 +77,28 @@ pub struct AccessToken {
 
 mod bluesky {
     use crate::{get_current_time, read_json_file, set_headers, AccessToken};
-    use curl::easy::{Easy, List};
+    use curl::easy::Easy;
     use serde::{Deserialize, Serialize};
     use std::env;
     use url::Url;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    pub struct LoginCredentials {
+    struct LoginCredentials {
         identifier: String,
         password: String,
     }
 
     #[derive(Serialize, Deserialize, Debug)]
-    pub struct CommitMessage {
+    struct CommitMessage {
         repo: String,
         collection: String,
         record: TextEntry,
     }
 
     #[derive(Serialize, Deserialize, Debug)]
-    pub struct TextEntry {
+    struct TextEntry {
         text: String,
         createdAt: String,
-    }
-
-    pub fn get_account() -> LoginCredentials {
-        let _ = dotenvy::dotenv().expect("Failed to load .env file");
-
-        let identifier = env::var("BLUESKY_LOGIN_NAME")
-            .expect("Please set the BLUESKY_LOGIN_NAME environment variable");
-        let password = env::var("BLUESKY_APP_PASSWORD")
-            .expect("Please set the BLUESKY_APP_PASSWORD environment variable");
-
-        LoginCredentials {
-            identifier,
-            password,
-        }
     }
 
     pub fn login() -> Result<AccessToken, curl::Error> {
@@ -121,8 +107,7 @@ mod bluesky {
         curl.url("https://bsky.social/xrpc/com.atproto.server.createSession")?;
         curl.post(true).unwrap();
 
-        let mut headers = List::new();
-        headers.append("Content-Type: application/json").unwrap();
+        let headers = set_headers(vec!["Content-Type: application/json".to_string()]);
         curl.http_headers(headers).unwrap();
 
         let post_data = get_account();
@@ -151,7 +136,7 @@ mod bluesky {
         })
     }
 
-    pub fn get_profile(access_token: AccessToken) -> String {
+    pub fn get_profile(access_token: &AccessToken) -> String {
         let mut response_data = Vec::new();
         let mut curl = Easy::new();
         let env = get_account();
@@ -183,27 +168,7 @@ mod bluesky {
         res_string
     }
 
-    pub fn set_post_message() -> CommitMessage {
-        let message = read_json_file("message.json").unwrap();
-        let account = get_account();
-        CommitMessage {
-            repo: account.identifier,
-            collection: "app.bsky.feed.post".to_string(),
-            record: TextEntry {
-                text: message.content,
-                createdAt: get_current_time(),
-            },
-        }
-    }
-
-    pub fn create_header(access_token: AccessToken) -> Vec<String> {
-        let token: &str = access_token.access_token.as_str();
-        println!("Authorization: Bearer {}", token);
-        let auth_header: String = format!("Authorization: Bearer {}", token);
-        vec![auth_header, "Content-Type: application/json".to_string()]
-    }
-
-    pub fn send_message(access_token: AccessToken) -> Result<bool, curl::Error> {
+    pub fn send_message(access_token: &AccessToken) -> Result<bool, curl::Error> {
         let mut response_data = Vec::new();
         let mut curl = Easy::new();
         curl.url("https://bsky.social/xrpc/com.atproto.repo.createRecord")
@@ -237,12 +202,46 @@ mod bluesky {
         println!("{}", res_string);
         Ok(true)
     }
+
+    fn get_account() -> LoginCredentials {
+        let _ = dotenvy::dotenv().expect("Failed to load .env file");
+
+        let identifier = env::var("BLUESKY_LOGIN_NAME")
+            .expect("Please set the BLUESKY_LOGIN_NAME environment variable");
+        let password = env::var("BLUESKY_APP_PASSWORD")
+            .expect("Please set the BLUESKY_APP_PASSWORD environment variable");
+
+        LoginCredentials {
+            identifier,
+            password,
+        }
+    }
+
+    fn set_post_message() -> CommitMessage {
+        let message = read_json_file("message.json").unwrap();
+        let account = get_account();
+        CommitMessage {
+            repo: account.identifier,
+            collection: "app.bsky.feed.post".to_string(),
+            record: TextEntry {
+                text: message.content,
+                createdAt: get_current_time(),
+            },
+        }
+    }
+
+    fn create_header(access_token: &AccessToken) -> Vec<String> {
+        let token: &str = access_token.access_token.as_str();
+        println!("Authorization: Bearer {}", token);
+        let auth_header: String = format!("Authorization: Bearer {}", token);
+        vec![auth_header, "Content-Type: application/json".to_string()]
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bluesky::get_profile;
+    use crate::bluesky::{get_profile, set_post_message};
     use curl::easy::Easy;
     use std::io::{stdout, Write};
 
@@ -253,7 +252,7 @@ mod tests {
         // send message
         match access_token {
             Ok(token) => {
-                get_profile(token);
+                get_profile(&token);
             }
             Err(err) => {
                 println!("Login failed.: {:?}", err)
@@ -263,7 +262,7 @@ mod tests {
 
     #[test]
     fn learn_bluesky_message() {
-        set_bluesky_message();
+        set_post_message();
     }
 
     // #[test]
@@ -271,11 +270,6 @@ mod tests {
     //     let result = bluesky_send_message();
     //     assert_eq!(true, result)
     // }
-
-    #[test]
-    fn test_learn_main() {
-        assert_eq!(true, learn_main());
-    }
 
     #[test]
     fn learn_value() {
