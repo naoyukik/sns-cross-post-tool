@@ -2,7 +2,6 @@ use crate::bluesky::{login, send_message};
 use chrono::Utc;
 use curl::easy::List;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use serde_json::Error;
 use std::env;
 use std::fs::File;
@@ -21,8 +20,8 @@ fn main() {
     }
 
     // send message
-    let access_token = login();
-    match access_token {
+    // let access_token = login();
+    match login() {
         Ok(token) => {
             match send_message(&token) {
                 Ok(_) => println!("Message has been sent successfully."),
@@ -36,7 +35,6 @@ fn main() {
 }
 
 pub fn read_json_file(file_path: &str) -> Result<Message, Error> {
-    let file_path = file_path;
     let file = File::open(file_path).expect("File not found");
     let reader = BufReader::new(file);
 
@@ -78,6 +76,7 @@ pub struct AccessToken {
 mod bluesky {
     use crate::{get_current_time, read_json_file, set_headers, AccessToken};
     use curl::easy::Easy;
+    use regex::{Captures, Match, Regex};
     use serde::{Deserialize, Serialize};
     use std::env;
     use url::Url;
@@ -98,7 +97,9 @@ mod bluesky {
     #[derive(Serialize, Deserialize, Debug)]
     struct TextEntry {
         text: String,
-        createdAt: String,
+        #[serde(rename = "createdAt")]
+        created_at: String,
+        facets: Vec<Facet>,
     }
 
     pub fn login() -> Result<AccessToken, curl::Error> {
@@ -130,9 +131,9 @@ mod bluesky {
         let res_string = String::from_utf8(response_data).unwrap();
         let sliced_res = res_string.as_str();
         let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
-        println!("{}", res_json.to_string());
+        println!("{}", res_json);
         Ok(AccessToken {
-            access_token: res_json["accessJwt"].to_string().replace("\"", ""),
+            access_token: res_json["accessJwt"].to_string().replace('\"', ""),
         })
     }
 
@@ -220,12 +221,14 @@ mod bluesky {
     fn set_post_message() -> CommitMessage {
         let message = read_json_file("message.json").unwrap();
         let account = get_account();
+        let cloned_content = message.content.clone();
         CommitMessage {
             repo: account.identifier,
             collection: "app.bsky.feed.post".to_string(),
             record: TextEntry {
                 text: message.content,
-                createdAt: get_current_time(),
+                created_at: get_current_time(),
+                facets: create_tags_facets(&cloned_content),
             },
         }
     }
@@ -237,13 +240,180 @@ mod bluesky {
         vec![auth_header, "Content-Type: application/json".to_string()]
     }
 
+    #[derive(Serialize, Deserialize, Debug)]
+    struct FacetIndex {
+        #[serde(rename = "byteStart")]
+        byte_start: u16,
+        #[serde(rename = "byteEnd")]
+        byte_end: u16,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct FacetFeatures {
+        #[serde(rename = "$type")]
+        facet_type: String,
+        tag: String,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Facet {
+        index: FacetIndex,
+        features: Vec<FacetFeatures>,
+    }
+
+    fn tags_to_facet_features(tag: &str) -> Vec<FacetFeatures> {
+        let re = Regex::new(r"^#").unwrap();
+        vec![FacetFeatures {
+            facet_type: "app.bsky.richtext.facet#tag".to_string(),
+            tag: re.replace(tag.trim(), "").to_string(),
+        }]
+    }
+
+    fn create_tags_facets(message_content: &str) -> Vec<Facet> {
+        find_hash_tags(message_content)
+            .iter()
+            .filter_map(|capture| capture.get(2).map(to_facet))
+            .collect()
+    }
+
+    fn find_hash_tags(haystack: &str) -> Vec<Captures> {
+        let pattern = r"(^|\s)(#\w*)";
+        let regex_pattern = Regex::new(pattern).unwrap();
+        regex_pattern.captures_iter(haystack).collect()
+    }
+
+    fn to_facet(capture_group: Match) -> Facet {
+        let start = capture_group.start() as u16;
+        let end = capture_group.end() as u16;
+        let tag = capture_group.as_str();
+        Facet {
+            index: to_facet_index(&start, &end),
+            features: tags_to_facet_features(tag),
+        }
+    }
+
+    fn to_facet_index(start: &u16, end: &u16) -> FacetIndex {
+        FacetIndex {
+            byte_start: *start,
+            byte_end: *end,
+        }
+    }
+
     #[cfg(test)]
     mod tests {
-        use crate::Receivers;
         use super::*;
         use crate::bluesky::{get_profile, set_post_message};
+        use crate::Receivers;
         use curl::easy::Easy;
         use std::io::{stdout, Write};
+
+        #[test]
+        fn can_create_tags() {
+            let index1 = FacetIndex {
+                byte_start: 29,
+                byte_end: 34,
+            };
+            let features1 = vec![{
+                FacetFeatures {
+                    facet_type: String::from("app.bsky.richtext.facet#tag"),
+                    tag: String::from("test"),
+                }
+            }];
+            let index2 = FacetIndex {
+                byte_start: 35,
+                byte_end: 41,
+            };
+            let features2 = vec![{
+                FacetFeatures {
+                    facet_type: String::from("app.bsky.richtext.facet#tag"),
+                    tag: String::from("test2"),
+                }
+            }];
+            let expected = vec![
+                Facet {
+                    index: index1,
+                    features: features1,
+                },
+                Facet {
+                    index: index2,
+                    features: features2,
+                },
+            ];
+            let sut = create_tags_facets("ハッシュ投稿テスト\n\n#test #test2");
+            println!("{:?}", sut);
+            assert_eq!(
+                sut.first().unwrap().index.byte_start,
+                expected.first().unwrap().index.byte_start
+            );
+            assert_eq!(
+                sut.first().unwrap().index.byte_end,
+                expected.first().unwrap().index.byte_end
+            );
+            assert_eq!(
+                sut.first().unwrap().features.first().unwrap().tag,
+                expected.first().unwrap().features.first().unwrap().tag
+            );
+            assert_eq!(
+                sut.get(1).unwrap().index.byte_start,
+                expected.get(1).unwrap().index.byte_start
+            );
+            assert_eq!(
+                sut.get(1).unwrap().index.byte_end,
+                expected.get(1).unwrap().index.byte_end
+            );
+            assert_eq!(
+                sut.get(1).unwrap().features.first().unwrap().tag,
+                expected.get(1).unwrap().features.first().unwrap().tag
+            );
+        }
+
+        #[test]
+        fn can_find_hash_tags() {
+            let hashes = [
+                ["#test", "29", "34"],
+                ["#日本語のテスト", "35", "57"],
+                ["#1111", "58", "63"],
+            ];
+
+            let matches = find_hash_tags("ハッシュ投稿テスト\n\n#test #日本語のテスト #1111");
+            for (hash_index, caps) in matches.iter().enumerate() {
+                if let Some(captures) = caps.get(2) {
+                    println!("{}", hash_index);
+                    match hashes.get(hash_index) {
+                        Some(hash) => {
+                            assert_eq!(&captures.as_str(), hash.first().unwrap());
+                            assert_eq!(
+                                captures.start().to_string(),
+                                hash.get(1).unwrap().to_string()
+                            );
+                            assert_eq!(
+                                captures.end().to_string(),
+                                hash.get(2).unwrap().to_string()
+                            );
+                        }
+                        None => panic!("No hash found at index 0"),
+                    }
+                }
+            }
+        }
+
+        #[test]
+        fn learn_find_hash_tags() {
+            let text = "ハッシュ投稿テスト\n\n#test #test2 #3test #1111 #日本語のカタカナ。";
+            // let pattern = r"(^|\s)(#[^\d\s]\w*)";
+            // let regex_pattern = Regex::new(pattern).unwrap();
+            //
+            // let matches = regex_pattern.find_iter(text);
+            let matches = find_hash_tags(text);
+            println!("matches: {:?}", matches);
+            for caps in matches {
+                if let Some(cap) = caps.get(2) {
+                    println!("Matched: {}", cap.as_str());
+                    println!("Start: {}", cap.start());
+                    println!("End: {}", cap.end());
+                }
+            }
+        }
 
         #[test]
         fn learn_bluesky_get_profile() {
