@@ -222,13 +222,17 @@ mod bluesky {
         let message = read_json_file("message.json").unwrap();
         let account = get_account();
         let cloned_content = message.content.clone();
+        let tags_facets = create_tags_facets(&cloned_content);
+        let links_facets = create_links_facets(&cloned_content);
+        let mut merged_facets: Vec<Facet> = tags_facets.clone();
+        merged_facets.extend(links_facets);
         CommitMessage {
             repo: account.identifier,
             collection: "app.bsky.feed.post".to_string(),
             record: TextEntry {
                 text: message.content,
                 created_at: get_current_time(),
-                facets: create_tags_facets(&cloned_content),
+                facets: merged_facets,
             },
         }
     }
@@ -240,7 +244,7 @@ mod bluesky {
         vec![auth_header, "Content-Type: application/json".to_string()]
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, Clone)]
     struct FacetIndex {
         #[serde(rename = "byteStart")]
         byte_start: u16,
@@ -248,14 +252,15 @@ mod bluesky {
         byte_end: u16,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
     struct FacetFeatures {
         #[serde(rename = "$type")]
         facet_type: String,
-        tag: String,
+        #[serde(flatten)]
+        feature_mode: FeatureMode,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, Clone)]
     struct Facet {
         index: FacetIndex,
         features: Vec<FacetFeatures>,
@@ -265,14 +270,36 @@ mod bluesky {
         let re = Regex::new(r"^#").unwrap();
         vec![FacetFeatures {
             facet_type: "app.bsky.richtext.facet#tag".to_string(),
-            tag: re.replace(tag.trim(), "").to_string(),
+            feature_mode: FeatureMode::Tag(re.replace(tag.trim(), "").to_string()),
+        }]
+    }
+
+    fn links_to_facet_features(tag: &str) -> Vec<FacetFeatures> {
+        vec![FacetFeatures {
+            facet_type: "app.bsky.richtext.facet#link".to_string(),
+            feature_mode: FeatureMode::Uri(tag.trim().to_string()),
         }]
     }
 
     fn create_tags_facets(message_content: &str) -> Vec<Facet> {
         find_hash_tags(message_content)
             .iter()
-            .filter_map(|capture| capture.get(2).map(to_facet))
+            .filter_map(|capture| {
+                capture
+                    .get(2)
+                    .map(|cap| to_facet(cap, FeatureMode::Tag("Tag".to_string())))
+            })
+            .collect()
+    }
+
+    fn create_links_facets(message_content: &str) -> Vec<Facet> {
+        find_link_string(message_content)
+            .iter()
+            .filter_map(|capture| {
+                capture
+                    .get(2)
+                    .map(|cap| to_facet(cap, FeatureMode::Uri("Uri".to_string())))
+            })
             .collect()
     }
 
@@ -282,13 +309,33 @@ mod bluesky {
         regex_pattern.captures_iter(haystack).collect()
     }
 
-    fn to_facet(capture_group: Match) -> Facet {
+    fn find_link_string(haystack: &str) -> Vec<Captures> {
+        let pattern = r"(^|\s)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))";
+        let regex = Regex::new(pattern).unwrap();
+        regex.captures_iter(haystack).collect()
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+    #[serde(rename_all = "lowercase")]
+    enum FeatureMode {
+        Tag(String),
+        Uri(String),
+    }
+
+    fn to_facet(capture_group: Match, feature_mode: FeatureMode) -> Facet {
         let start = capture_group.start() as u16;
         let end = capture_group.end() as u16;
-        let tag = capture_group.as_str();
+        let match_str = capture_group.as_str();
         Facet {
             index: to_facet_index(&start, &end),
-            features: tags_to_facet_features(tag),
+            features: handle_facet_feature(feature_mode, match_str),
+        }
+    }
+
+    fn handle_facet_feature(feature_mode: FeatureMode, match_str: &str) -> Vec<FacetFeatures> {
+        match feature_mode {
+            FeatureMode::Tag(_) => tags_to_facet_features(match_str),
+            FeatureMode::Uri(_) => links_to_facet_features(match_str),
         }
     }
 
@@ -316,7 +363,7 @@ mod bluesky {
             let features1 = vec![{
                 FacetFeatures {
                     facet_type: String::from("app.bsky.richtext.facet#tag"),
-                    tag: String::from("test"),
+                    feature_mode: FeatureMode::Tag(String::from("test")),
                 }
             }];
             let index2 = FacetIndex {
@@ -326,7 +373,7 @@ mod bluesky {
             let features2 = vec![{
                 FacetFeatures {
                     facet_type: String::from("app.bsky.richtext.facet#tag"),
-                    tag: String::from("test2"),
+                    feature_mode: FeatureMode::Tag(String::from("test2")),
                 }
             }];
             let expected = vec![
@@ -350,8 +397,14 @@ mod bluesky {
                 expected.first().unwrap().index.byte_end
             );
             assert_eq!(
-                sut.first().unwrap().features.first().unwrap().tag,
-                expected.first().unwrap().features.first().unwrap().tag
+                sut.first().unwrap().features.first().unwrap().feature_mode,
+                expected
+                    .first()
+                    .unwrap()
+                    .features
+                    .first()
+                    .unwrap()
+                    .feature_mode
             );
             assert_eq!(
                 sut.get(1).unwrap().index.byte_start,
@@ -362,8 +415,14 @@ mod bluesky {
                 expected.get(1).unwrap().index.byte_end
             );
             assert_eq!(
-                sut.get(1).unwrap().features.first().unwrap().tag,
-                expected.get(1).unwrap().features.first().unwrap().tag
+                sut.get(1).unwrap().features.first().unwrap().feature_mode,
+                expected
+                    .get(1)
+                    .unwrap()
+                    .features
+                    .first()
+                    .unwrap()
+                    .feature_mode
             );
         }
 
@@ -416,6 +475,21 @@ mod bluesky {
         }
 
         #[test]
+        fn learn_find_link_strings() {
+            let text =
+                "Link test\n\n#hash #test\n\nhttps://www.example.com/url/?query=test&query2=test2";
+            let matches = find_link_string(text);
+            println!("matches: {:?}", matches);
+            for caps in matches {
+                if let Some(cap) = caps.get(2) {
+                    println!("Matched: {}", cap.as_str());
+                    println!("Start: {}", cap.start());
+                    println!("End: {}", cap.end());
+                }
+            }
+        }
+
+        #[test]
         fn learn_bluesky_get_profile() {
             let access_token = login();
 
@@ -432,7 +506,8 @@ mod bluesky {
 
         #[test]
         fn learn_bluesky_message() {
-            set_post_message();
+            let post_message = set_post_message();
+            print!("{:?}", post_message);
         }
 
         // #[test]
