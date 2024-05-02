@@ -223,7 +223,7 @@ mod bluesky {
         let account = get_account();
         let cloned_content = message.content.clone();
         let tags_facets = create_tags_facets(&cloned_content);
-        let links_facets= create_links_facets(&cloned_content);
+        let links_facets = create_links_facets(&cloned_content);
         let mut merged_facets: Vec<Facet> = tags_facets.clone();
         merged_facets.extend(links_facets);
         CommitMessage {
@@ -284,13 +284,23 @@ mod bluesky {
     fn create_tags_facets(message_content: &str) -> Vec<Facet> {
         find_hash_tags(message_content)
             .iter()
-            .filter_map(|capture| capture.get(2).map(|cap| to_facet(cap, FeatureMode::Tag("Tag".to_string()))))
+            .filter_map(|capture| {
+                capture
+                    .get(2)
+                    .map(|cap| to_facet(cap, FeatureMode::Tag("Tag".to_string())))
+            })
             .collect()
     }
 
     fn create_links_facets(message_content: &str) -> Vec<Facet> {
         find_link_string(message_content)
-            .iter().filter_map(|capture| capture.get(2).map(|cap| to_facet(cap, FeatureMode::Uri("Uri".to_string())))).collect()
+            .iter()
+            .filter_map(|capture| {
+                capture
+                    .get(2)
+                    .map(|cap| to_facet(cap, FeatureMode::Uri("Uri".to_string())))
+            })
+            .collect()
     }
 
     fn find_hash_tags(haystack: &str) -> Vec<Captures> {
@@ -298,7 +308,7 @@ mod bluesky {
         let regex_pattern = Regex::new(pattern).unwrap();
         regex_pattern.captures_iter(haystack).collect()
     }
-    
+
     fn find_link_string(haystack: &str) -> Vec<Captures> {
         let pattern = r"(^|\s)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))";
         let regex = Regex::new(pattern).unwrap();
@@ -324,12 +334,8 @@ mod bluesky {
 
     fn handle_facet_feature(feature_mode: FeatureMode, match_str: &str) -> Vec<FacetFeatures> {
         match feature_mode {
-            FeatureMode::Tag(_) => {
-                tags_to_facet_features(match_str)
-            },
-            FeatureMode::Uri(_) => {
-                links_to_facet_features(match_str)
-            },
+            FeatureMode::Tag(_) => tags_to_facet_features(match_str),
+            FeatureMode::Uri(_) => links_to_facet_features(match_str),
         }
     }
 
@@ -392,7 +398,13 @@ mod bluesky {
             );
             assert_eq!(
                 sut.first().unwrap().features.first().unwrap().feature_mode,
-                expected.first().unwrap().features.first().unwrap().feature_mode
+                expected
+                    .first()
+                    .unwrap()
+                    .features
+                    .first()
+                    .unwrap()
+                    .feature_mode
             );
             assert_eq!(
                 sut.get(1).unwrap().index.byte_start,
@@ -404,7 +416,13 @@ mod bluesky {
             );
             assert_eq!(
                 sut.get(1).unwrap().features.first().unwrap().feature_mode,
-                expected.get(1).unwrap().features.first().unwrap().feature_mode
+                expected
+                    .get(1)
+                    .unwrap()
+                    .features
+                    .first()
+                    .unwrap()
+                    .feature_mode
             );
         }
 
@@ -458,7 +476,8 @@ mod bluesky {
 
         #[test]
         fn learn_find_link_strings() {
-            let text = "Link test\n\n#hash #test\n\nhttps://www.example.com/url/?query=test&query2=test2";
+            let text =
+                "Link test\n\n#hash #test\n\nhttps://www.example.com/url/?query=test&query2=test2";
             let matches = find_link_string(text);
             println!("matches: {:?}", matches);
             for caps in matches {
