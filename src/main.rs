@@ -1,5 +1,6 @@
 mod bluesky;
 
+use crate::bluesky::{login, send_message};
 use chrono::Utc;
 use curl::easy::List;
 use serde::{Deserialize, Serialize};
@@ -8,7 +9,6 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::process::exit;
-use crate::bluesky::{login, send_message};
 
 fn main() {
     let args: Vec<String> = env::args().collect();

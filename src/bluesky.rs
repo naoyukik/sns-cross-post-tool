@@ -1,9 +1,9 @@
+use crate::{get_current_time, read_json_file, set_headers, AccessToken};
 use curl::easy::Easy;
 use regex::{Captures, Match, Regex};
 use serde::{Deserialize, Serialize};
 use std::env;
 use url::Url;
-use crate::{AccessToken, get_current_time, read_json_file, set_headers};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct LoginCredentials {
@@ -70,7 +70,7 @@ pub fn get_profile(access_token: &AccessToken) -> String {
         "https://bsky.social/xrpc/app.bsky.actor.getProfile",
         queries,
     )
-        .unwrap();
+    .unwrap();
     curl.url(url_with_params.as_str()).unwrap();
 
     let headers = create_header(access_token);
@@ -273,9 +273,9 @@ fn to_facet_index(start: &u16, end: &u16) -> FacetIndex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Receivers;
     use curl::easy::Easy;
     use std::io::{stdout, Write};
-    use crate::Receivers;
 
     #[test]
     fn can_create_tags() {
@@ -368,10 +368,7 @@ mod tests {
                             captures.start().to_string(),
                             hash.get(1).unwrap().to_string()
                         );
-                        assert_eq!(
-                            captures.end().to_string(),
-                            hash.get(2).unwrap().to_string()
-                        );
+                        assert_eq!(captures.end().to_string(), hash.get(2).unwrap().to_string());
                     }
                     None => panic!("No hash found at index 0"),
                 }
