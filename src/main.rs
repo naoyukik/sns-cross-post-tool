@@ -1,4 +1,5 @@
 mod bluesky;
+mod mastodon;
 
 use crate::bluesky::{login, send_message};
 use chrono::Utc;
@@ -80,6 +81,14 @@ pub fn get_current_time() -> String {
     now.format("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
+pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
+    let res_string = String::from_utf8(response_data).unwrap();
+    println!("{}", res_string);
+    let sliced_res = res_string.as_str();
+    serde_json::from_str::<T>(sliced_res).unwrap()
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AccessToken {
     access_token: String,
 }
