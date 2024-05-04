@@ -21,17 +21,26 @@ fn main() {
         exit(0)
     }
 
-    // send message
-    // let access_token = login();
-    match login() {
-        Ok(token) => {
-            match send_message(&token) {
-                Ok(_) => println!("Message has been sent successfully."),
-                Err(err) => println!("Failed to send the message: {:?}", err),
-            };
-        }
-        Err(err) => {
-            println!("Login failed.: {:?}", err)
+    let message = read_json_file("message.json").unwrap();
+
+    for receiver in message.receivers {
+        match receiver {
+            Receivers::BlueSky => {
+                match login() {
+                    Ok(token) => {
+                        match send_message(&token) {
+                            Ok(_) => println!("Bluesky: Message has been sent successfully."),
+                            Err(err) => println!("Failed to send the message: {:?}", err),
+                        };
+                    }
+                    Err(err) => {
+                        println!("Login failed.: {:?}", err)
+                    }
+                }
+            },
+            Receivers::Mastodon => {
+                println!("Mastodon: not yet implemented.")
+            }
         }
     }
 }
