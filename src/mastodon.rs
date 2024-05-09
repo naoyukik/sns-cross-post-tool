@@ -19,7 +19,7 @@ impl Endpoints {
     fn new() -> Self {
         Self {
             search: "/api/v1/accounts/verify_credentials",
-            statuses: "/api/v1/statuses"
+            statuses: "/api/v1/statuses",
         }
     }
 }
@@ -227,7 +227,6 @@ pub fn send_message(api_client: ApiClient) -> Result<bool, curl::Error> {
     println!("{}", res_string);
     Ok(true)
 }
-
 
 #[cfg(test)]
 mod tests {
