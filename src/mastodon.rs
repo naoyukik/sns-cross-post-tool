@@ -25,7 +25,7 @@ impl Endpoints {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Config {
+pub struct Config {
     domain: String,
     access_token: AccessToken,
     account: String,
@@ -36,8 +36,8 @@ trait EndpointBuilder {
     fn create_endpoint_url(&self, path: &str) -> Url;
 }
 
-struct ApiClient {
-    config: Config,
+pub struct ApiClient {
+    pub config: Config,
 }
 
 impl EndpointBuilder for ApiClient {
@@ -52,7 +52,7 @@ impl EndpointBuilder for ApiClient {
     }
 }
 
-fn set_config() -> Config {
+pub fn set_config() -> Config {
     dotenvy::dotenv().expect("Failed to load .env file");
     let domain =
         env::var("MASTODON_DOMAIN").expect("Please set the MASTODON_DOMAIN environment variable");
@@ -187,15 +187,11 @@ fn set_post_message() -> CommitMessage {
     }
 }
 
-struct Account {
-    account: String,
-}
-
 struct UserAccount {
     account_id: String,
 }
 
-fn send_message(api_client: ApiClient) -> Result<bool, curl::Error> {
+pub fn send_message(api_client: ApiClient) -> Result<bool, curl::Error> {
     let endpoints = Endpoints::new();
     let endpoint = api_client.create_endpoint_url(endpoints.statuses);
 
@@ -250,10 +246,10 @@ mod tests {
         fetch_user_account(api_client);
     }
 
-    #[test]
-    fn learn_post_message() {
-        let config = set_config();
-        let api_client = ApiClient { config };
-        send_message(api_client);
-    }
+    // #[test]
+    // fn learn_post_message() {
+    //     let config = set_config();
+    //     let api_client = ApiClient { config };
+    //     send_message(api_client);
+    // }
 }

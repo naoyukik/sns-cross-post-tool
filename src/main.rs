@@ -4,6 +4,7 @@ mod mastodon;
 use crate::bluesky::{login, send_message};
 use chrono::Utc;
 use curl::easy::List;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::env;
@@ -26,21 +27,24 @@ fn main() {
 
     for receiver in message.receivers {
         match receiver {
-            Receivers::BlueSky => {
-                match login() {
-                    Ok(token) => {
-                        match send_message(&token) {
-                            Ok(_) => println!("Bluesky: Message has been sent successfully."),
-                            Err(err) => println!("Failed to send the message: {:?}", err),
-                        };
-                    }
-                    Err(err) => {
-                        println!("Login failed.: {:?}", err)
-                    }
+            Receivers::BlueSky => match login() {
+                Ok(token) => {
+                    match send_message(&token) {
+                        Ok(_) => println!("Bluesky: Message has been sent successfully."),
+                        Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
+                    };
+                }
+                Err(err) => {
+                    println!("Login failed.: {:?}", err)
                 }
             },
             Receivers::Mastodon => {
-                println!("Mastodon: not yet implemented.")
+                let config = mastodon::set_config();
+                let api_client = mastodon::ApiClient { config };
+                match mastodon::send_message(api_client) {
+                    Ok(_) => println!("Mastodon: Message has been sent successfully."),
+                    Err(err) => println!("Mastodon: Failed to send the message: {:?}", err),
+                }
             }
         }
     }
