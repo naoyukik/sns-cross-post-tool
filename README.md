@@ -17,9 +17,12 @@ cargo build
 ## Usage
 
 1. Environment Variable Configuration
-    - Set the account information of the SNS where you will post your message in environment variables.
+    - Set the account information for the SNS where you will post your message in environment variables.
     - `BLUESKY_LOGIN_NAME` : Login name on BlueSky
     - `BLUESKY_APP_PASSWORD` : App Password for BlueSky
+    - `MASTODON_DOMAIN` : Mastodon instance domain
+    - `MASTODON_APP_PASSWORD` : App Password for your Mastodon account
+    - `MASTODON_ACCOUNT` : Your Mastodon account username
     - We recommend placing an `.env` file in the project root directory and setting the above environment variables in it.
 
 2. Message Configuration
@@ -74,6 +77,9 @@ cargo build
     - メッセージを投稿する先のアカウント情報を環境変数に設定します。
     - `BLUESKY_LOGIN_NAME` : BlueSkyのログイン名
     - `BLUESKY_APP_PASSWORD` : BlueSkyのアプリパスワード
+    - `MASTODON_DOMAIN` : Mastodonのインスタンスドメイン
+    - `MASTODON_APP_PASSWORD` : Mastodonのアプリパスワード
+    - `MASTODON_ACCOUNT` : あなたのMastodonのアカウント名
     - `.env` ファイルをプロジェクトのルートディレクトリに配置して、その中に上記の環境変数を設定することを推奨します。
 
 2. メッセージの設定
