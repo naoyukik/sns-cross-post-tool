@@ -1,8 +1,10 @@
 mod bluesky;
+mod mastodon;
 
 use crate::bluesky::{login, send_message};
 use chrono::Utc;
 use curl::easy::List;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::env;
@@ -25,21 +27,24 @@ fn main() {
 
     for receiver in message.receivers {
         match receiver {
-            Receivers::BlueSky => {
-                match login() {
-                    Ok(token) => {
-                        match send_message(&token) {
-                            Ok(_) => println!("Bluesky: Message has been sent successfully."),
-                            Err(err) => println!("Failed to send the message: {:?}", err),
-                        };
-                    }
-                    Err(err) => {
-                        println!("Login failed.: {:?}", err)
-                    }
+            Receivers::BlueSky => match login() {
+                Ok(token) => {
+                    match send_message(&token) {
+                        Ok(_) => println!("Bluesky: Message has been sent successfully."),
+                        Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
+                    };
+                }
+                Err(err) => {
+                    println!("Login failed.: {:?}", err)
                 }
             },
             Receivers::Mastodon => {
-                println!("Mastodon: not yet implemented.")
+                let config = mastodon::set_config();
+                let api_client = mastodon::ApiClient { config };
+                match mastodon::send_message(api_client) {
+                    Ok(_) => println!("Mastodon: Message has been sent successfully."),
+                    Err(err) => println!("Mastodon: Failed to send the message: {:?}", err),
+                }
             }
         }
     }
@@ -80,6 +85,14 @@ pub fn get_current_time() -> String {
     now.format("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
+pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
+    let res_string = String::from_utf8(response_data).unwrap();
+    println!("{}", res_string);
+    let sliced_res = res_string.as_str();
+    serde_json::from_str::<T>(sliced_res).unwrap()
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AccessToken {
     access_token: String,
 }
