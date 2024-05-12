@@ -64,6 +64,13 @@ pub struct Message {
     content: String,
     sender: String,
     receivers: Vec<Receivers>,
+    fixed_hashtags: FixedHashtags,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+struct FixedHashtags {
+    mastodon: String,
+    bluesky: String,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
