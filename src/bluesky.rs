@@ -143,9 +143,10 @@ fn get_account() -> LoginCredentials {
 }
 
 fn set_post_message() -> CommitMessage {
-    let message = read_json_file("message.json").unwrap();
     let account = get_account();
-    let cloned_content = message.content.clone();
+    let message = read_json_file("message.json").unwrap();
+    let content_with_fixed_hashtags = format!("{} {}", message.content, message.fixed_hashtags.bluesky);
+    let cloned_content = content_with_fixed_hashtags.clone();
     let tags_facets = create_tags_facets(&cloned_content);
     let links_facets = create_links_facets(&cloned_content);
     let mut merged_facets: Vec<Facet> = tags_facets.clone();
@@ -154,7 +155,7 @@ fn set_post_message() -> CommitMessage {
         repo: account.identifier,
         collection: "app.bsky.feed.post".to_string(),
         record: TextEntry {
-            text: message.content,
+            text: content_with_fixed_hashtags,
             created_at: get_current_time(),
             facets: merged_facets,
         },
