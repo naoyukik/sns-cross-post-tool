@@ -6,8 +6,8 @@ settings:
 
 devDependencies:
   danger:
-    specifier: ^12.1.0
-    version: 12.1.0
+    specifier: ^12.3.1
+    version: 12.3.1
 
 packages:
 
@@ -229,8 +229,8 @@ packages:
     requiresBuild: true
     dev: true
 
-  /danger@12.1.0:
-    resolution: {integrity: sha512-pD3PxXSPuEhlLpiR3pUupt/kkwNKhWbmPCPTq/KuKEE9E0WimDsNsozboZLiBLit6bbBJBlttpDtFXGpVMqM1A==}
+  /danger@12.3.1:
+    resolution: {integrity: sha512-K5ydQs6fTl6+iAWZJ5Fk238YmGMGnDx/5ZD7ZBTK4NgztAxXIupWVEYUACFy/lUpvih6EDKocn12OF1MS3UsLQ==}
     engines: {node: '>=18'}
     hasBin: true
     dependencies:
