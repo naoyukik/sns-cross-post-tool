@@ -1,5 +1,6 @@
 mod bluesky;
 mod mastodon;
+mod ogp;
 
 use crate::bluesky::{login, send_message};
 use chrono::Utc;
