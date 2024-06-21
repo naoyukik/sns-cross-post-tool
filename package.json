@@ -11,6 +11,6 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
-    "danger": "^12.3.1"
+    "danger": "^12.3.3"
   }
 }
