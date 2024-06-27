@@ -1,4 +1,5 @@
 use scraper::{Html, Selector};
+use serde::{Deserialize, Serialize};
 
 fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
     let mut easy = curl::easy::Easy::new();
@@ -17,12 +18,12 @@ fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
     Ok(html)
 }
 
-#[derive(Debug)]
-struct Ogp {
-    title: String,
-    desc: String,
-    image: String,
-    url: String,
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Ogp {
+    pub title: String,
+    pub desc: String,
+    pub image: String,
+    pub url: String,
 }
 
 fn extract(html: Vec<u8>) -> Ogp {
