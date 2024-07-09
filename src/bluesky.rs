@@ -2,8 +2,12 @@ use crate::{get_current_time, read_json_file, set_headers, AccessToken};
 use curl::easy::Easy;
 use regex::{Captures, Match, Regex};
 use serde::{Deserialize, Serialize};
-use std::env;
+use std::{env, fs};
+use std::fs::File;
+use std::io::Write;
 use url::Url;
+use crate::ogp;
+use crate::ogp::Ogp;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct LoginCredentials {
@@ -73,7 +77,7 @@ pub fn get_profile(access_token: &AccessToken) -> String {
     .unwrap();
     curl.url(url_with_params.as_str()).unwrap();
 
-    let headers = create_header(access_token);
+    let headers = create_header(access_token, "application/json");
     let header_list = set_headers(headers);
     curl.http_headers(header_list).unwrap();
 
@@ -100,7 +104,7 @@ pub fn send_message(access_token: &AccessToken) -> Result<bool, curl::Error> {
         .unwrap();
     curl.post(true).unwrap();
 
-    let headers = create_header(access_token);
+    let headers = create_header(access_token, "application/json");
     let header_list = set_headers(headers);
     curl.http_headers(header_list).unwrap();
 
@@ -148,6 +152,7 @@ fn set_post_message() -> CommitMessage {
     let content_with_fixed_hashtags = format!("{} {}", message.content, message.fixed_hashtags.bluesky);
     let cloned_content = content_with_fixed_hashtags.clone();
     let tags_facets = create_tags_facets(&cloned_content);
+    // let links_embed = create_links_embed(&cloned_content);
     let links_facets = create_links_facets(&cloned_content);
     let mut merged_facets: Vec<Facet> = tags_facets.clone();
     merged_facets.extend(links_facets);
@@ -162,11 +167,61 @@ fn set_post_message() -> CommitMessage {
     }
 }
 
-fn create_header(access_token: &AccessToken) -> Vec<String> {
+// fn create_links_embed(message_content: &str) -> Vec<Embed> {
+//     let embed = find_link_string(message_content)
+//         .iter()
+//         .filter_map(|capture| {
+//             capture
+//                 .get(2)
+//                 .map(|cap| to_facet(cap, FeatureMode::Uri("Uri".to_string())))
+//         });
+//     println!("{:?}", embed);
+//     todo!()
+// }
+
+fn create_header(access_token: &AccessToken, content_type: &str) -> Vec<String> {
     let token: &str = access_token.access_token.as_str();
     println!("Authorization: Bearer {}", token);
     let auth_header: String = format!("Authorization: Bearer {}", token);
-    vec![auth_header, "Content-Type: application/json".to_string()]
+    let content_type_header = format!("Content-Type: {}", content_type);
+    vec![auth_header, content_type_header]
+}
+
+#[derive(Serialize, Deserialize)]
+struct Ref {
+    #[serde(rename = "$link")]
+    _link: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Thumb {
+    #[serde(rename = "$type")]
+    _type: String,
+    #[serde(rename = "ref")]
+    r#ref: Ref,
+    #[serde(rename = "mimeType")]
+    mime_type: String,
+    size: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct External {
+    uri: String,
+    thumb: Thumb,
+    title: String,
+    description: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Embed {
+    #[serde(rename = "$type")]
+    _type: String,
+    external: External,
+}
+
+#[derive(Serialize, Deserialize)]
+struct EmbedRoot {
+    embed: Embed
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -228,6 +283,23 @@ fn create_links_facets(message_content: &str) -> Vec<Facet> {
         .collect()
 }
 
+fn to_embed(capture_group: Match) {
+    let url = capture_group.as_str();
+    let ogps = ogp::get(url.to_string());
+    // match ogps {
+    //     Ok(ogp) => {
+    //         ogp.url
+    //     }
+    //     Err(e) => {
+    //         eprintln!("Error occurred: {}", e);
+    //     }
+    // }
+
+    // match ogp::get(url.to_string()) {
+    //     Ok(ogps) =>
+    // }
+}
+
 fn find_hash_tags(haystack: &str) -> Vec<Captures> {
     let pattern = r"(^|\s)(#\w*)";
     let regex_pattern = Regex::new(pattern).unwrap();
@@ -271,12 +343,97 @@ fn to_facet_index(start: &u16, end: &u16) -> FacetIndex {
     }
 }
 
+fn get_image_by_ogp(ogp: Ogp, dest: &str) {
+    let mut response_data = Vec::new();
+    let mut curl = Easy::new();
+    let endpoint = ogp.image;
+    curl.url(endpoint.as_str()).unwrap();
+
+    {
+        let mut transfer = curl.transfer();
+        transfer
+            .write_function(|data| {
+                response_data.extend_from_slice(data);
+                Ok(data.len())
+            })
+            .unwrap();
+        transfer.perform().unwrap();
+    }
+
+    let mut file = match File::create(dest) {
+        Ok(file) => file,
+        Err(why) => panic!("couldn't create {}: {}", dest, why)
+    };
+    match file.write_all(&response_data) {
+        Ok(_) => println!("Successfully wrote to {}", dest),
+        Err(why) => panic!("couldn't write to {}:{}", dest, why)
+    }
+}
+
+fn upload_image_blog(access_token: AccessToken, file_path: String) {
+    let data = fs::read(file_path).unwrap();
+
+    if data.len() > 1000000 {
+        panic!("image file size too large. 1000000 bytes maximum, got:{}", data.len().to_string())
+    }
+
+    let mut response_data = Vec::new();
+    let mut curl = Easy::new();
+    let endpoint = "https://public.api.bsky.app/xrpc/com.atproto.repo.uploadBlob";
+    curl.url(endpoint).unwrap();
+    let content_type = "*/*";
+    let headers = create_header(&access_token, content_type);
+    let header_list = set_headers(headers);
+    curl.http_headers(header_list).unwrap();
+
+    curl.post_fields_copy(&data).unwrap();
+    {
+        let mut transfer = curl.transfer();
+        transfer
+            .write_function(|data| {
+                response_data.extend_from_slice(data);
+                Ok(data.len())
+            })
+            .unwrap();
+        transfer.perform().unwrap();
+    }
+
+    println!("{:?}", response_data)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::Receivers;
     use curl::easy::Easy;
     use std::io::{stdout, Write};
+
+    // ogpのURLから画像を取得する
+    #[test]
+    fn learn_get_image_by_ogp_url() {
+        let image_url = "https://placehold.jp/150x150.png";
+        let ogp = Ogp {
+            title: "Title".to_string(),
+            desc: "Desc".to_string(),
+            image: image_url.to_string(),
+            url: "Url".to_string(),
+        };
+        let parsed_url = Url::parse(image_url).unwrap();
+
+        let save_path = format!("./{}", parsed_url.path());
+        get_image_by_ogp(ogp, save_path.as_str())
+    }
+    // 取得した画像をbyte列としてuploadBlobにアップロード
+    #[test]
+    fn learn_upload_image() {
+        let access_token = login().unwrap();
+        let file_path = "./150x150.png";
+        upload_image_blog(access_token, file_path.to_string())
+    }
+    // アップロードのレスポンスからblobを取得
+    fn learn_get_uploaded_image() {}
+    // blobをembed.imagesとして投稿する
+    fn learn_post_embed_images() {}
 
     #[test]
     fn can_create_tags() {
