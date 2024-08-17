@@ -82,4 +82,16 @@ mod tests {
         assert_eq!(ogp.image, "https://example.com/sample.jpg");
         assert_eq!(ogp.url, "https://example.com/");
     }
+
+    #[test]
+    fn empty_extract_ogp() {
+        let html = r#"<html><head>
+            </head></html>"#.as_bytes().to_vec();
+
+        let ogp = extract(html);
+        assert_eq!(ogp.title, "");
+        assert_eq!(ogp.desc, "");
+        assert_eq!(ogp.image, "");
+        assert_eq!(ogp.url, "");
+    }
 }
