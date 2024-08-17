@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::{env, fs};
 use std::fs::File;
 use std::io::Write;
+use std::ptr::null;
 use url::Url;
 use crate::ogp;
 use crate::ogp::Ogp;
@@ -152,6 +153,31 @@ fn set_post_message() -> CommitMessage {
     let content_with_fixed_hashtags = format!("{} {}", message.content, message.fixed_hashtags.bluesky);
     let cloned_content = content_with_fixed_hashtags.clone();
     let tags_facets = create_tags_facets(&cloned_content);
+    // メッセージからURLを取得
+    let url_string = get_url_string(&cloned_content);
+    // URLが存在する場合、OGPを取得する
+    if !url_string.is_empty() {
+        let ogp = ogp::get(url_string).expect("Failed to get OGP data");
+        let dest = "./";
+        get_image_by_ogp(ogp, dest);
+        let ogp_image_path = format!("{}/{}", dest, ogp.image);
+        let ogp_image_blob = upload_image_blob(access_token.clone(), ogp_image_path);
+        let thumb = website_card_embeds::create_thumb(Url::parse(&ogp.url).unwrap(), ogp_image_blob);
+        let thumb_facet = Facet {
+            index: FacetIndex {
+                byte_start: 0,
+                byte_end: 0,
+            },
+            features: vec![FacetFeatures {
+                facet_type: "website_card_embeds".to_string(),
+                feature_mode: FeatureMode::Uri(thumb.uri),
+            }],
+        };
+        merged_facets.push(thumb_facet);
+    }
+    // ogp.imageのURLで画像をダウンロードする
+    // 取得したOGP画像をBlueskyへアップロードする
+    // website_card_embeds::create_thumb();
     // let links_embed = create_links_embed(&cloned_content);
     let links_facets = create_links_facets(&cloned_content);
     let mut merged_facets: Vec<Facet> = tags_facets.clone();
@@ -187,41 +213,122 @@ fn create_header(access_token: &AccessToken, content_type: &str) -> Vec<String> 
     vec![auth_header, content_type_header]
 }
 
-#[derive(Serialize, Deserialize)]
-struct Ref {
-    #[serde(rename = "$link")]
-    _link: String,
-}
+mod website_card_embeds {
+    use std::fs;
+    use std::path::Path;
+    use serde::{Deserialize, Serialize};
+    use url::Url;
+    use crate::AccessToken;
+    use crate::bluesky::upload_image_blob;
 
-#[derive(Serialize, Deserialize)]
-struct Thumb {
-    #[serde(rename = "$type")]
-    _type: String,
-    #[serde(rename = "ref")]
-    r#ref: Ref,
-    #[serde(rename = "mimeType")]
-    mime_type: String,
-    size: String,
-}
+    #[derive(Serialize, Deserialize)]
+    struct Ref {
+        #[serde(rename = "$link")]
+        _link: String,
+    }
 
-#[derive(Serialize, Deserialize)]
-struct External {
-    uri: String,
-    thumb: Thumb,
-    title: String,
-    description: String,
-}
+    #[derive(Serialize, Deserialize)]
+    struct Thumb {
+        #[serde(rename = "$type")]
+        _type: String,
+        #[serde(rename = "ref")]
+        r#ref: Ref,
+        #[serde(rename = "mimeType")]
+        mime_type: String,
+        size: u64,
+    }
 
-#[derive(Serialize, Deserialize)]
-struct Embed {
-    #[serde(rename = "$type")]
-    _type: String,
-    external: External,
-}
+    #[derive(Serialize, Deserialize)]
+    struct External {
+        uri: String,
+        thumb: Thumb,
+        title: String,
+        description: String,
+    }
 
-#[derive(Serialize, Deserialize)]
-struct EmbedRoot {
-    embed: Embed
+    #[derive(Serialize, Deserialize)]
+    struct Embed {
+        #[serde(rename = "$type")]
+        _type: String,
+        external: External,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct Root {
+        embed: Embed
+    }
+
+    pub fn create_thumb(uri: Url, blob: Vec<u8>) -> Thumb {
+        let extension = get_extension(&uri);
+        let image_type = extension_to_image_type(extension.as_str());
+        let mime_type = get_mime_type(image_type);
+        let file_name = get_file_name(&uri);
+        let file_size = get_file_size(format!("./{}", file_name).as_str());
+        let ref_data = get_ref(blob);
+
+        Thumb {
+            _type: "blob".to_string(),
+            r#ref: ref_data,
+            mime_type: mime_type.to_string(),
+            size: file_size,
+        }
+    }
+
+    fn get_file_size(file_path: &str) -> u64 {
+        fs::metadata(file_path).unwrap().len()
+    }
+
+    enum ImageType {
+        JPEG,
+        PNG,
+        GIF,
+        WebP,
+        SVG,
+        Unknown,
+    }
+
+    fn get_mime_type(image_type: ImageType) -> &'static str {
+        match image_type {
+            ImageType::JPEG => "image/jpeg",
+            ImageType::PNG => "image/png",
+            ImageType::GIF => "image/gif",
+            ImageType::WebP => "image/webp",
+            ImageType::SVG => "image/svg+xml",
+            ImageType::Unknown => "",
+        }
+    }
+
+    fn get_extension(url: &Url) -> String {
+        let extension = Path::new(url.as_str()).extension().unwrap();
+       extension.to_string_lossy().to_string()
+    }
+
+    fn extension_to_image_type(extension: &str) -> ImageType {
+        match extension.to_lowercase().as_str() {
+            "jpg" | "jpeg" => ImageType::JPEG,
+            "png" => ImageType::PNG,
+            "gif" => ImageType::GIF,
+            "webp" => ImageType::WebP,
+            "svg" => ImageType::SVG,
+            _ => ImageType::Unknown,
+        }
+    }
+
+    fn get_file_name(url: &Url) -> String {
+        let file_name = Path::new(url.as_str()).file_name().unwrap();
+        file_name.to_string_lossy().to_string()
+    }
+
+    // fn get_file_size(file_path: &str) -> u64 {
+    //
+    // }
+
+    fn get_ref(blob: Vec<u8>) -> Ref {
+        let link = String::from_utf8(blob).unwrap();
+        Ref {
+            _link: link
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -283,6 +390,18 @@ fn create_links_facets(message_content: &str) -> Vec<Facet> {
         .collect()
 }
 
+fn get_url_string(text: &str) -> String {
+    let matches = find_link_string(text);
+    println!("matches: {:?}", matches);
+    let mut url = "";
+    for caps in matches {
+        if let Some(cap) = caps.get(2) {
+            url = cap.as_str();
+        }
+    }
+    url.to_string()
+}
+
 fn to_embed(capture_group: Match) {
     let url = capture_group.as_str();
     let ogps = ogp::get(url.to_string());
@@ -306,10 +425,10 @@ fn find_hash_tags(haystack: &str) -> Vec<Captures> {
     regex_pattern.captures_iter(haystack).collect()
 }
 
-fn find_link_string(haystack: &str) -> Vec<Captures> {
+fn find_link_string(message: &str) -> Vec<Captures> {
     let pattern = r"(^|\s)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))";
     let regex = Regex::new(pattern).unwrap();
-    regex.captures_iter(haystack).collect()
+    regex.captures_iter(message).collect()
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -370,7 +489,7 @@ fn get_image_by_ogp(ogp: Ogp, dest: &str) {
     }
 }
 
-fn upload_image_blog(access_token: AccessToken, file_path: String) {
+fn upload_image_blob(access_token: AccessToken, file_path: String) -> Vec<u8> {
     let data = fs::read(file_path).unwrap();
 
     if data.len() > 1000000 {
@@ -398,7 +517,9 @@ fn upload_image_blog(access_token: AccessToken, file_path: String) {
         transfer.perform().unwrap();
     }
 
-    println!("{:?}", response_data)
+    println!("response_data: {:?}", response_data);
+
+    response_data
 }
 
 #[cfg(test)]
@@ -425,15 +546,21 @@ mod tests {
     }
     // 取得した画像をbyte列としてuploadBlobにアップロード
     #[test]
-    fn learn_upload_image() {
-        let access_token = login().unwrap();
-        let file_path = "./150x150.png";
-        upload_image_blog(access_token, file_path.to_string())
-    }
+    // fn learn_upload_image() {
+    //     let access_token = login().unwrap();
+    //     let file_path = "./150x150.png";
+    //     upload_image_blog(access_token, file_path.to_string())
+    // }
     // アップロードのレスポンスからblobを取得
     fn learn_get_uploaded_image() {}
     // blobをembed.imagesとして投稿する
     fn learn_post_embed_images() {}
+
+    #[test]
+    fn learn_file_metadata() {
+        let metadata = fs::metadata("./150x150.png").unwrap();
+        println!("{:?}", metadata.len())
+    }
 
     #[test]
     fn can_create_tags() {
@@ -535,6 +662,24 @@ mod tests {
     }
 
     #[test]
+    fn can_get_url_string() {
+        let text =
+            "Link test\n\n#hash #test\n\nhttps://www.example.com/url/?query=test&query2=test2";
+        let sut = get_url_string(text);
+
+        assert_eq!(sut, "https://www.example.com/url/?query=test&query2=test2".to_string())
+    }
+
+    #[test]
+    fn empty_get_url_string() {
+        let text =
+            "Link test\n\n#hash #test\n\n";
+        let sut = get_url_string(text);
+
+        assert_eq!(sut, "".to_string())
+    }
+
+    #[test]
     fn learn_find_hash_tags() {
         let text = "ハッシュ投稿テスト\n\n#test #test2 #3test #1111 #日本語のカタカナ。";
         // let pattern = r"(^|\s)(#[^\d\s]\w*)";
@@ -565,6 +710,16 @@ mod tests {
                 println!("End: {}", cap.end());
             }
         }
+    }
+
+    #[test]
+    fn learn_not_found_link_strings() {
+        let text =
+            "Link test\n\n#hash #test\n\n";
+        let matches = create_links_facets(text);
+        println!("matches: {:?}", matches);
+        let matches_length = matches.len();
+        println!("matches: {}", matches_length);
     }
 
     #[test]
