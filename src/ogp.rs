@@ -55,17 +55,17 @@ mod tests {
 
     // #[test]
     // fn can_scrape_html() {
-    //     let url = "https://zenn.dev/naoyukik/articles/76229e10e0a35f".to_string();
+    //     let url = "https://...".to_string();
     //     let ogp = scrape_ogp(url);
     // }
 
-    #[test]
-    fn can_get_html() {
-        let url = "https://zenn.dev/naoyukik/articles/76229e10e0a35f";
-        let html = get_html(url).unwrap();
-        let string = String::from_utf8(html).unwrap();
-        println!("{}", string)
-    }
+    // #[test]
+    // fn can_get_html() {
+    //     let url = "https://...";
+    //     let html = get_html(url).unwrap();
+    //     let string = String::from_utf8(html).unwrap();
+    //     println!("{}", string)
+    // }
 
     #[test]
     fn can_extract_ogp() {

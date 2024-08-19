@@ -463,23 +463,13 @@ mod tests {
     }
 
     #[test]
-    fn learn_curl() -> Result<(), curl::Error> {
-        let mut curl = Easy::new();
-        curl.url("https://bsky.social/xrpc/com.atproto.server.createSession")?;
-        curl.write_function(|data| {
-            stdout().write_all(data).unwrap();
-            Ok(data.len())
-        })?;
-        curl.perform()?;
-        Ok(())
-    }
-
-    #[test]
     fn can_read_json_file() {
         let result = read_json_file("./tests/resources/message.json").unwrap();
         assert_eq!(result.content, "Test message");
         assert_eq!(result.sender, "user1");
         assert_eq!(result.receivers.len(), 1);
         assert!(result.receivers.contains(&Receivers::BlueSky));
+        assert_eq!(result.fixed_hashtags.mastodon, "#mastodon");
+        assert_eq!(result.fixed_hashtags.bluesky, "#bluesky");
     }
 }
