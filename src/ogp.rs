@@ -1,5 +1,7 @@
+use std::path::Path;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
     let mut easy = curl::easy::Easy::new();
@@ -26,6 +28,24 @@ pub struct Ogp {
     pub url: String,
 }
 
+impl Ogp {
+    pub fn get_image_name(&self) -> String {
+        let url = self.parse_image_to_url_type();
+        let file_name = Path::new(url.as_str()).file_name().unwrap();
+        file_name.to_string_lossy().to_string()
+    }
+
+    pub fn get_image_extension(&self) -> String {
+        let url = self.parse_image_to_url_type();
+        let extension = Path::new(url.as_str()).extension().unwrap();
+        extension.to_string_lossy().to_string()
+    }
+
+    fn parse_image_to_url_type(&self) -> Url {
+        Url::parse(&self.image).unwrap()
+    }
+}
+
 fn extract(html: Vec<u8>) -> Ogp {
     let html_str = String::from_utf8(html).expect("Failed to convert Vec<u8> to String");
     let fragment = Html::parse_fragment(&html_str);
@@ -41,11 +61,9 @@ fn extract(html: Vec<u8>) -> Ogp {
     }
 }
 
-pub fn get(url: String) -> Result<Ogp, String> {
-    let ogp = match get_html(&url) {
-        Ok(html) => extract(html),
-        Err(err) => return Err(format!("Error: {}", err))
-    };
+pub fn get(url: String) -> Result<Ogp, curl::Error> {
+    let html = get_html(&url)?;
+    let ogp = extract(html);
     Ok(ogp)
 }
 

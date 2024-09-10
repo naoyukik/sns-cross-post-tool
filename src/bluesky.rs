@@ -1,4 +1,4 @@
-use crate::{get_current_time, read_json_file, set_headers, AccessToken};
+use crate::{get_current_time, ogp, ogp_scraping, read_json_file, set_headers, AccessToken};
 use curl::easy::Easy;
 use regex::{Captures, Match, Regex};
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,7 @@ struct TextEntry {
     #[serde(rename = "createdAt")]
     created_at: String,
     facets: Vec<Facet>,
+    embed: Option<website_card_embeds::Embed>,
 }
 
 pub fn login() -> Result<AccessToken, curl::Error> {
@@ -55,7 +56,7 @@ pub fn login() -> Result<AccessToken, curl::Error> {
     let res_string = String::from_utf8(response_data).unwrap();
     let sliced_res = res_string.as_str();
     let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
-    println!("{}", res_json);
+    println!("login res_json {}", res_json);
     Ok(AccessToken {
         access_token: res_json["accessJwt"].to_string().replace('\"', ""),
     })
@@ -73,7 +74,7 @@ pub fn get_profile(access_token: &AccessToken) -> String {
     .unwrap();
     curl.url(url_with_params.as_str()).unwrap();
 
-    let headers = create_header(access_token);
+    let headers = create_header(access_token, "application/json");
     let header_list = set_headers(headers);
     curl.http_headers(header_list).unwrap();
 
@@ -100,11 +101,11 @@ pub fn send_message(access_token: &AccessToken) -> Result<bool, curl::Error> {
         .unwrap();
     curl.post(true).unwrap();
 
-    let headers = create_header(access_token);
+    let headers = create_header(access_token, "application/json");
     let header_list = set_headers(headers);
     curl.http_headers(header_list).unwrap();
 
-    let post_data = set_post_message();
+    let post_data = set_post_message(access_token);
     let binding = serde_json::to_string(&post_data).unwrap();
     let serialized = binding.as_bytes();
     println!(
@@ -142,31 +143,42 @@ fn get_account() -> LoginCredentials {
     }
 }
 
-fn set_post_message() -> CommitMessage {
+fn set_post_message(access_token: &AccessToken) -> CommitMessage {
     let account = get_account();
     let message = read_json_file("message.json").unwrap();
     let content_with_fixed_hashtags = format!("{} {}", message.content, message.fixed_hashtags.bluesky);
     let cloned_content = content_with_fixed_hashtags.clone();
     let tags_facets = create_tags_facets(&cloned_content);
     let links_facets = create_links_facets(&cloned_content);
-    let mut merged_facets: Vec<Facet> = tags_facets.clone();
+    let mut merged_facets: Vec<Facet> = tags_facets;
     merged_facets.extend(links_facets);
+
+    let url_string = get_url_string(&cloned_content);
+    let mut embed: Option<website_card_embeds::Embed> = None;
+    if !url_string.is_empty() {
+        let ogp = ogp_scraping::fetch_ogp_data(url_string); // expect(&format!("Error occurred: Error"));
+        if let Ok(ogp) = ogp {
+            embed = Some(website_card_embeds::create(access_token, &ogp));
+        }
+    }
+    let text_entry = TextEntry {
+        text: content_with_fixed_hashtags,
+        created_at: get_current_time(),
+        facets: merged_facets,
+        embed,
+    };
     CommitMessage {
         repo: account.identifier,
         collection: "app.bsky.feed.post".to_string(),
-        record: TextEntry {
-            text: content_with_fixed_hashtags,
-            created_at: get_current_time(),
-            facets: merged_facets,
-        },
+        record: text_entry,
     }
 }
 
-fn create_header(access_token: &AccessToken) -> Vec<String> {
+pub fn create_header(access_token: &AccessToken, content_type: &str) -> Vec<String> {
     let token: &str = access_token.access_token.as_str();
-    println!("Authorization: Bearer {}", token);
-    let auth_header: String = format!("Authorization: Bearer {}", token);
-    vec![auth_header, "Content-Type: application/json".to_string()]
+    let auth_header: String = format!("Authorization: Bearer {token}");
+    let content_type_header = format!("Content-Type: {content_type}");
+    vec![auth_header, content_type_header]
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -271,12 +283,250 @@ fn to_facet_index(start: &u16, end: &u16) -> FacetIndex {
     }
 }
 
+mod website_card_embeds {
+    use crate::bluesky::create_header;
+    use crate::ogp::Ogp;
+    use crate::{ogp_scraping, set_headers, AccessToken};
+    use curl::easy::{Easy};
+    use serde::{Deserialize, Serialize};
+    use std::fs;
+    use std::path::Path;
+    use url::Url;
+
+    pub fn create(access_token: &AccessToken, ogp: &Ogp) -> Embed {
+        let dest = ".";
+        ogp_scraping::fetch_image_by_ogp(ogp, dest);
+        let ogp_image_path = format!("{}/{}", dest, ogp.get_image_name());
+        let ogp_image_blob = upload_image_blob(
+            access_token,
+            ogp_image_path.as_str()
+        );
+        let thumb = Thumb::create(ogp, ogp_image_blob);
+        let external = External::create(ogp, thumb);
+        Embed::create(external)
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct EmbedRoot {
+        embed: Embed
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Embed {
+        #[serde(rename = "$type")]
+        _type: String,
+        external: External,
+    }
+
+    impl Embed {
+        fn create(external: External) -> Embed {
+            Embed {
+                _type: "app.bsky.embed.external".to_string(),
+                external,
+            }
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct External {
+        uri: String,
+        thumb: Thumb,
+        title: String,
+        description: String,
+    }
+
+    impl External {
+        fn create(ogp: &Ogp, thumbnail: Thumb) -> External {
+            let uri = &ogp.url;
+            let title = &ogp.title;
+            let desc = &ogp.desc;
+            External {
+                uri: uri.to_string(),
+                thumb: thumbnail,
+                title: title.to_string(),
+                description: desc.to_string(),
+            }
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Thumb {
+        #[serde(rename = "$type")]
+        _type: String,
+        #[serde(rename = "ref")]
+        r#ref: Ref,
+        #[serde(rename = "mimeType")]
+        mime_type: String,
+        size: u64,
+    }
+
+    impl Thumb {
+        fn create(ogp: &Ogp, blob: UploadImageBlobToResponse) -> Thumb {
+            let extension = ogp.get_image_extension();
+            let image_type = extension_to_image_type(extension.as_str());
+            let mime_type = get_mime_type(image_type);
+            let file_name = ogp.get_image_name();
+            let file_size = get_file_size(format!("./{}", file_name).as_str());
+            let ref_data = blob.r#ref;
+
+            Thumb {
+                _type: "blob".to_string(),
+                r#ref: ref_data,
+                mime_type: mime_type.to_string(),
+                size: file_size,
+            }
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Ref {
+        #[serde(rename = "$link")]
+        _link: String,
+    }
+
+    impl Ref {
+        fn get_link(&self) -> &str {
+            &self._link
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct UploadImageBlobToResponse {
+        #[serde(rename = "$type")]
+        _type: String,
+        #[serde(rename = "ref")]
+        r#ref: Ref,
+        #[serde(rename = "mimeType")]
+        mime_type: String,
+        size: u64,
+    }
+
+    impl UploadImageBlobToResponse {
+        fn create(blob: &serde_json::Value) -> UploadImageBlobToResponse {
+            UploadImageBlobToResponse {
+                _type: blob["$type"].to_string().replace('\"', ""),
+                r#ref: Ref {
+                    _link: blob["ref"]["$link"].to_string().replace('\"', ""),
+                },
+                mime_type: blob["mimeType"].to_string().replace('\"', ""),
+                size: blob["size"].as_u64().unwrap(),
+            }
+        }
+    }
+
+    pub fn upload_image_blob(access_token: &AccessToken, file_path: &str) -> UploadImageBlobToResponse {
+        let data = fs::read(file_path).expect("Failed to read the file.");
+
+        if data.len() > 1_000_000 {
+            panic!("Image file size too large. 1,000,000 bytes maximum, got:{}", data.len())
+        }
+
+        let mut response_data = Vec::new();
+        let mut curl = Easy::new();
+        let endpoint = "https://bsky.social/xrpc/com.atproto.repo.uploadBlob";
+        curl.url(endpoint).unwrap();
+        let content_type = "image/png";
+        let headers = create_header(&access_token, content_type);
+        let mut header_list = set_headers(headers);
+        header_list.append("Accept: application/json").unwrap();
+        curl.http_headers(header_list).unwrap();
+        curl.post(true).unwrap();
+
+        curl.post_fields_copy(&data).unwrap();
+        {
+            let mut transfer = curl.transfer();
+            transfer
+                .write_function(|data| {
+                    response_data.extend_from_slice(data);
+                    Ok(data.len())
+                }).unwrap();
+            transfer.perform().unwrap();
+        }
+
+        let res_string = String::from_utf8(response_data).unwrap();
+        let sliced_res = res_string.as_str();
+        let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
+        let blob = &res_json["blob"];
+
+        UploadImageBlobToResponse::create(blob)
+    }
+
+
+    fn get_file_size(file_path: &str) -> u64 {
+        fs::metadata(file_path).unwrap().len()
+    }
+
+    enum ImageType {
+        JPEG,
+        PNG,
+        GIF,
+        WebP,
+        SVG,
+        Unknown,
+    }
+
+    fn get_mime_type(image_type: ImageType) -> &'static str {
+        match image_type {
+            ImageType::JPEG => "image/jpeg",
+            ImageType::PNG => "image/png",
+            ImageType::GIF => "image/gif",
+            ImageType::WebP => "image/webp",
+            ImageType::SVG => "image/svg+xml",
+            ImageType::Unknown => "",
+        }
+    }
+
+    fn get_extension(url: &Url) -> String {
+        let extension = Path::new(url.as_str()).extension().unwrap();
+        extension.to_string_lossy().to_string()
+    }
+
+    fn extension_to_image_type(extension: &str) -> ImageType {
+        match extension.to_lowercase().as_str() {
+            "jpg" | "jpeg" => ImageType::JPEG,
+            "png" => ImageType::PNG,
+            "gif" => ImageType::GIF,
+            "webp" => ImageType::WebP,
+            "svg" => ImageType::SVG,
+            _ => ImageType::Unknown,
+        }
+    }
+
+    fn get_file_name(url: &Url) -> String {
+        let file_name = Path::new(url.as_str()).file_name().unwrap();
+        file_name.to_string_lossy().to_string()
+    }
+
+    fn get_ref(blob: Vec<u8>) -> Ref {
+        let link = String::from_utf8(blob).unwrap();
+        Ref {
+            _link: link
+        }
+    }
+}
+
+fn get_url_string(text: &str) -> String {
+    let matches = find_link_string(text);
+    println!("matches: {:?}", matches);
+    let mut url = "";
+    for caps in matches {
+        if let Some(cap) = caps.get(2) {
+            url = cap.as_str();
+        }
+    }
+    url.to_string()
+}
+
+fn to_embed(capture_group: Match) {
+    let url = capture_group.as_str();
+    let ogps = ogp::get(url.to_string()).expect(&format!("Error occurred: Error"));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bluesky::website_card_embeds::upload_image_blob;
     use crate::Receivers;
-    use curl::easy::Easy;
-    use std::io::{stdout, Write};
 
     #[test]
     fn can_create_tags() {
@@ -426,16 +676,25 @@ mod tests {
     }
 
     #[test]
-    fn learn_bluesky_message() {
-        let post_message = set_post_message();
+    fn learn_set_message() {
+        let access_token = login().unwrap();
+        let post_message = set_post_message(&access_token);
         print!("{:?}", post_message);
     }
 
-    // #[test]
-    // fn learn_bluesky_send_message() {
-    //     let result = bluesky_send_message();
-    //     assert_eq!(true, result)
-    // }
+    #[test]
+    fn learn_upload_image_blob() {
+        let access_token = login().unwrap();
+        let message = upload_image_blob(&access_token, "./150x150.png");
+        print!("{:?}", message);
+    }
+
+    #[test]
+    fn learn_bluesky_send_message() {
+        let access_token = login().unwrap();
+        let result = send_message(&access_token);
+        print!("{:?}", result);
+    }
 
     #[test]
     fn learn_value() {
