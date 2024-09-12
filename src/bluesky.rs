@@ -24,6 +24,9 @@ struct TextEntry {
     #[serde(rename = "createdAt")]
     created_at: String,
     facets: Vec<Facet>,
+    #[serde(rename = "$type")]
+    _type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     embed: Option<website_card_embeds::Embed>,
 }
 
@@ -165,6 +168,7 @@ fn set_post_message(access_token: &AccessToken) -> CommitMessage {
         text: content_with_fixed_hashtags,
         created_at: get_current_time(),
         facets: merged_facets,
+        _type: "app.bsky.feed.post".to_string(),
         embed,
     };
     CommitMessage {
