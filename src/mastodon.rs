@@ -182,7 +182,8 @@ fn to_user_account(response: CredentialAccountRoot) -> UserAccount {
 
 fn set_post_message() -> CommitMessage {
     let message = read_json_file("message.json").unwrap();
-    let content_with_fixed_hashtags = format!("{} {}", message.content, message.fixed_hashtags.mastodon);
+    let content_with_fixed_hashtags =
+        format!("{} {}", message.content, message.fixed_hashtags.mastodon);
     CommitMessage {
         status: content_with_fixed_hashtags,
     }

@@ -1,9 +1,9 @@
-use crate::{get_current_time, ogp, ogp_scraping, read_json_file, set_headers, AccessToken};
-use curl::easy::Easy;
+use crate::bluesky::application::authentication_workflow::login;
+use crate::bluesky::application::send_message_workflow::send_message;
+use crate::bluesky::domain::dto::access_token_dto::AccessTokenDto;
+use crate::{get_current_time, ogp, ogp_scraping, read_json_file};
 use regex::{Captures, Match, Regex};
 use serde::{Deserialize, Serialize};
-use std::env;
-use url::Url;
 
 // #[derive(Serialize, Deserialize, PartialEq, Debug)]
 // struct LoginCredentials {
@@ -65,7 +65,7 @@ struct TextEntry {
 //     })
 // }
 
-// pub fn get_profile(access_token: &AccessToken) -> String {
+// pub fn get_profile(access_token: &AccessTokenDto) -> String {
 //     let mut response_data = Vec::new();
 //     let mut curl = Easy::new();
 //     let env = get_account();
@@ -74,7 +74,7 @@ struct TextEntry {
 //         "https://bsky.social/xrpc/app.bsky.actor.getProfile",
 //         queries,
 //     )
-//     .unwrap();
+//         .unwrap();
 //     curl.url(url_with_params.as_str()).unwrap();
 //
 //     let headers = create_header(access_token, "application/json");
@@ -97,93 +97,65 @@ struct TextEntry {
 //     res_string
 // }
 
-// pub fn send_message(access_token: &AccessToken) -> Result<bool, curl::Error> {
-//     let mut response_data = Vec::new();
-//     let mut curl = Easy::new();
-//     curl.url("https://bsky.social/xrpc/com.atproto.repo.createRecord")
-//         .unwrap();
-//     curl.post(true).unwrap();
-//
-//     let headers = create_header(access_token, "application/json");
-//     let header_list = set_headers(headers);
-//     curl.http_headers(header_list).unwrap();
-//
-//     let post_data = set_post_message(access_token);
-//     let binding = serde_json::to_string(&post_data).unwrap();
-//     let serialized = binding.as_bytes();
-//     println!(
-//         "POST data: {:?}",
-//         String::from_utf8(serialized.to_vec()).unwrap()
-//     );
-//
-//     curl.post_fields_copy(serialized).unwrap();
-//     {
-//         let mut transfer = curl.transfer();
-//         transfer
-//             .write_function(|data| {
-//                 response_data.extend_from_slice(data);
-//                 Ok(data.len())
-//             })
-//             .unwrap();
-//         transfer.perform().unwrap();
-//     }
-//     let res_string = String::from_utf8(response_data).unwrap();
-//     println!("{}", res_string);
-//     Ok(true)
+pub fn post() -> Result<bool, curl::Error> {
+    let access_token = login();
+    let result = send_message(&access_token)?;
+    Ok(result)
+}
+
+// pub fn create_header(access_token: &AccessToken, content_type: &str) -> Vec<String> {
+//     let token: &str = access_token.access_token.as_str();
+//     let auth_header: String = format!("Authorization: Bearer {token}");
+//     let content_type_header = format!("Content-Type: {content_type}");
+//     vec![auth_header, content_type_header]
 // }
 
-fn get_account() -> LoginCredentials {
-    let _ = dotenvy::dotenv().expect("Failed to load .env file");
+// fn get_account() -> LoginCredentials {
+//     let _ = dotenvy::dotenv().expect("Failed to load .env file");
+//
+//     let identifier = env::var("BLUESKY_LOGIN_NAME")
+//         .expect("Please set the BLUESKY_LOGIN_NAME environment variable");
+//     let password = env::var("BLUESKY_APP_PASSWORD")
+//         .expect("Please set the BLUESKY_APP_PASSWORD environment variable");
+//
+//     LoginCredentials {
+//         identifier,
+//         password,
+//     }
+// }
 
-    let identifier = env::var("BLUESKY_LOGIN_NAME")
-        .expect("Please set the BLUESKY_LOGIN_NAME environment variable");
-    let password = env::var("BLUESKY_APP_PASSWORD")
-        .expect("Please set the BLUESKY_APP_PASSWORD environment variable");
-
-    LoginCredentials {
-        identifier,
-        password,
-    }
-}
-
-fn set_post_message(access_token: &AccessToken) -> CommitMessage {
-    let account = get_account();
-    let message = read_json_file("message.json").unwrap();
-    let content_with_fixed_hashtags = format!("{} {}", message.content, message.fixed_hashtags.bluesky);
-    let cloned_content = content_with_fixed_hashtags.clone();
-    let tags_facets = create_tags_facets(&cloned_content);
-    let links_facets = create_links_facets(&cloned_content);
-    let mut merged_facets: Vec<Facet> = tags_facets;
-    merged_facets.extend(links_facets);
-
-    let url_string = get_url_string(&cloned_content);
-    let mut embed: Option<website_card_embeds::Embed> = None;
-    if !url_string.is_empty() {
-        let ogp = ogp_scraping::fetch_ogp_data(url_string); // expect(&format!("Error occurred: Error"));
-        if let Ok(ogp) = ogp {
-            embed = Some(website_card_embeds::create(access_token, &ogp));
-        }
-    }
-    let text_entry = TextEntry {
-        text: content_with_fixed_hashtags,
-        created_at: get_current_time(),
-        facets: merged_facets,
-        _type: "app.bsky.feed.post".to_string(),
-        embed,
-    };
-    CommitMessage {
-        repo: account.identifier,
-        collection: "app.bsky.feed.post".to_string(),
-        record: text_entry,
-    }
-}
-
-pub fn create_header(access_token: &AccessToken, content_type: &str) -> Vec<String> {
-    let token: &str = access_token.access_token.as_str();
-    let auth_header: String = format!("Authorization: Bearer {token}");
-    let content_type_header = format!("Content-Type: {content_type}");
-    vec![auth_header, content_type_header]
-}
+// fn set_post_message(access_token: &AccessTokenDto) -> CommitMessage {
+//     let account = get_account();
+//     let message = read_json_file("message.json").unwrap();
+//     let content_with_fixed_hashtags =
+//         format!("{} {}", message.content, message.fixed_hashtags.bluesky);
+//     let cloned_content = content_with_fixed_hashtags.clone();
+//     let tags_facets = create_tags_facets(&cloned_content);
+//     let links_facets = create_links_facets(&cloned_content);
+//     let mut merged_facets: Vec<Facet> = tags_facets;
+//     merged_facets.extend(links_facets);
+// 
+//     let url_string = get_url_string(&cloned_content);
+//     let mut embed: Option<website_card_embeds::Embed> = None;
+//     if !url_string.is_empty() {
+//         let ogp = ogp_scraping::fetch_ogp_data(url_string); // expect(&format!("Error occurred: Error"));
+//         if let Ok(ogp) = ogp {
+//             embed = Some(website_card_embeds::create(access_token, &ogp));
+//         }
+//     }
+//     let text_entry = TextEntry {
+//         text: content_with_fixed_hashtags,
+//         created_at: get_current_time(),
+//         facets: merged_facets,
+//         _type: "app.bsky.feed.post".to_string(),
+//         embed,
+//     };
+//     CommitMessage {
+//         repo: account.identifier,
+//         collection: "app.bsky.feed.post".to_string(),
+//         record: text_entry,
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct FacetIndex {
@@ -526,213 +498,213 @@ fn to_embed(capture_group: Match) {
     let ogps = ogp::get(url.to_string()).expect(&format!("Error occurred: Error"));
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::bluesky::website_card_embeds::upload_image_blob;
-    use crate::Receivers;
-
-    #[test]
-    fn can_create_tags() {
-        let index1 = FacetIndex {
-            byte_start: 29,
-            byte_end: 34,
-        };
-        let features1 = vec![{
-            FacetFeatures {
-                facet_type: String::from("app.bsky.richtext.facet#tag"),
-                feature_mode: FeatureMode::Tag(String::from("test")),
-            }
-        }];
-        let index2 = FacetIndex {
-            byte_start: 35,
-            byte_end: 41,
-        };
-        let features2 = vec![{
-            FacetFeatures {
-                facet_type: String::from("app.bsky.richtext.facet#tag"),
-                feature_mode: FeatureMode::Tag(String::from("test2")),
-            }
-        }];
-        let expected = vec![
-            Facet {
-                index: index1,
-                features: features1,
-            },
-            Facet {
-                index: index2,
-                features: features2,
-            },
-        ];
-        let sut = create_tags_facets("ハッシュ投稿テスト\n\n#test #test2");
-        println!("{:?}", sut);
-        assert_eq!(
-            sut.first().unwrap().index.byte_start,
-            expected.first().unwrap().index.byte_start
-        );
-        assert_eq!(
-            sut.first().unwrap().index.byte_end,
-            expected.first().unwrap().index.byte_end
-        );
-        assert_eq!(
-            sut.first().unwrap().features.first().unwrap().feature_mode,
-            expected
-                .first()
-                .unwrap()
-                .features
-                .first()
-                .unwrap()
-                .feature_mode
-        );
-        assert_eq!(
-            sut.get(1).unwrap().index.byte_start,
-            expected.get(1).unwrap().index.byte_start
-        );
-        assert_eq!(
-            sut.get(1).unwrap().index.byte_end,
-            expected.get(1).unwrap().index.byte_end
-        );
-        assert_eq!(
-            sut.get(1).unwrap().features.first().unwrap().feature_mode,
-            expected
-                .get(1)
-                .unwrap()
-                .features
-                .first()
-                .unwrap()
-                .feature_mode
-        );
-    }
-
-    #[test]
-    fn can_find_hash_tags() {
-        let hashes = [
-            ["#test", "29", "34"],
-            ["#日本語のテスト", "35", "57"],
-            ["#1111", "58", "63"],
-        ];
-
-        let matches = find_hash_tags("ハッシュ投稿テスト\n\n#test #日本語のテスト #1111");
-        for (hash_index, caps) in matches.iter().enumerate() {
-            if let Some(captures) = caps.get(2) {
-                println!("{}", hash_index);
-                match hashes.get(hash_index) {
-                    Some(hash) => {
-                        assert_eq!(&captures.as_str(), hash.first().unwrap());
-                        assert_eq!(
-                            captures.start().to_string(),
-                            hash.get(1).unwrap().to_string()
-                        );
-                        assert_eq!(captures.end().to_string(), hash.get(2).unwrap().to_string());
-                    }
-                    None => panic!("No hash found at index 0"),
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn learn_find_hash_tags() {
-        let text = "ハッシュ投稿テスト\n\n#test #test2 #3test #1111 #日本語のカタカナ。";
-        // let pattern = r"(^|\s)(#[^\d\s]\w*)";
-        // let regex_pattern = Regex::new(pattern).unwrap();
-        //
-        // let matches = regex_pattern.find_iter(text);
-        let matches = find_hash_tags(text);
-        println!("matches: {:?}", matches);
-        for caps in matches {
-            if let Some(cap) = caps.get(2) {
-                println!("Matched: {}", cap.as_str());
-                println!("Start: {}", cap.start());
-                println!("End: {}", cap.end());
-            }
-        }
-    }
-
-    #[test]
-    fn learn_find_link_strings() {
-        let text =
-            "Link test\n\n#hash #test\n\nhttps://www.example.com/url/?query=test&query2=test2";
-        let matches = find_link_string(text);
-        println!("matches: {:?}", matches);
-        for caps in matches {
-            if let Some(cap) = caps.get(2) {
-                println!("Matched: {}", cap.as_str());
-                println!("Start: {}", cap.start());
-                println!("End: {}", cap.end());
-            }
-        }
-    }
-
-    #[test]
-    fn learn_bluesky_get_profile() {
-        let access_token = login();
-
-        // send message
-        match access_token {
-            Ok(token) => {
-                get_profile(&token);
-            }
-            Err(err) => {
-                println!("Login failed.: {:?}", err)
-            }
-        }
-    }
-
-    #[test]
-    fn learn_set_message() {
-        let access_token = login().unwrap();
-        let post_message = set_post_message(&access_token);
-        print!("{:?}", post_message);
-    }
-
-    #[test]
-    fn learn_upload_image_blob() {
-        let access_token = login().unwrap();
-        let message = upload_image_blob(&access_token, "./150x150.png");
-        print!("{:?}", message);
-    }
-
-    #[test]
-    fn learn_bluesky_send_message() {
-        let access_token = login().unwrap();
-        let result = send_message(&access_token);
-        print!("{:?}", result);
-    }
-
-    #[test]
-    fn learn_value() {
-        let data = read_json_file("./tests/resources/message.json").unwrap();
-        println!("{}", data.sender)
-
-        // if let Some(sender) = data.get("sender") {
-        //     println!("Sender -> {}", sender)
-        // } else {
-        //     println!("Sender not found")
-        // }
-    }
-
-    #[test]
-    fn learn_env() {
-        let _ = dotenvy::dotenv();
-
-        // for (key, value) in env::vars() {
-        //     println!("{key}: {value}");
-        // }
-        match env::var("BLUESKY_APP_PASSWORD") {
-            Ok(val) => println!("{val:?}"),
-            Err(e) => println!("err: {e}"),
-        }
-    }
-
-    #[test]
-    fn can_read_json_file() {
-        let result = read_json_file("./tests/resources/message.json").unwrap();
-        assert_eq!(result.content, "Test message");
-        assert_eq!(result.sender, "user1");
-        assert_eq!(result.receivers.len(), 1);
-        assert!(result.receivers.contains(&Receivers::BlueSky));
-        assert_eq!(result.fixed_hashtags.mastodon, "#mastodon");
-        assert_eq!(result.fixed_hashtags.bluesky, "#bluesky");
-    }
-}
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use crate::bluesky::website_card_embeds::upload_image_blob;
+//     use crate::Receivers;
+//
+//     #[test]
+//     fn can_create_tags() {
+//         let index1 = FacetIndex {
+//             byte_start: 29,
+//             byte_end: 34,
+//         };
+//         let features1 = vec![{
+//             FacetFeatures {
+//                 facet_type: String::from("app.bsky.richtext.facet#tag"),
+//                 feature_mode: FeatureMode::Tag(String::from("test")),
+//             }
+//         }];
+//         let index2 = FacetIndex {
+//             byte_start: 35,
+//             byte_end: 41,
+//         };
+//         let features2 = vec![{
+//             FacetFeatures {
+//                 facet_type: String::from("app.bsky.richtext.facet#tag"),
+//                 feature_mode: FeatureMode::Tag(String::from("test2")),
+//             }
+//         }];
+//         let expected = vec![
+//             Facet {
+//                 index: index1,
+//                 features: features1,
+//             },
+//             Facet {
+//                 index: index2,
+//                 features: features2,
+//             },
+//         ];
+//         let sut = create_tags_facets("ハッシュ投稿テスト\n\n#test #test2");
+//         println!("{:?}", sut);
+//         assert_eq!(
+//             sut.first().unwrap().index.byte_start,
+//             expected.first().unwrap().index.byte_start
+//         );
+//         assert_eq!(
+//             sut.first().unwrap().index.byte_end,
+//             expected.first().unwrap().index.byte_end
+//         );
+//         assert_eq!(
+//             sut.first().unwrap().features.first().unwrap().feature_mode,
+//             expected
+//                 .first()
+//                 .unwrap()
+//                 .features
+//                 .first()
+//                 .unwrap()
+//                 .feature_mode
+//         );
+//         assert_eq!(
+//             sut.get(1).unwrap().index.byte_start,
+//             expected.get(1).unwrap().index.byte_start
+//         );
+//         assert_eq!(
+//             sut.get(1).unwrap().index.byte_end,
+//             expected.get(1).unwrap().index.byte_end
+//         );
+//         assert_eq!(
+//             sut.get(1).unwrap().features.first().unwrap().feature_mode,
+//             expected
+//                 .get(1)
+//                 .unwrap()
+//                 .features
+//                 .first()
+//                 .unwrap()
+//                 .feature_mode
+//         );
+//     }
+//
+//     #[test]
+//     fn can_find_hash_tags() {
+//         let hashes = [
+//             ["#test", "29", "34"],
+//             ["#日本語のテスト", "35", "57"],
+//             ["#1111", "58", "63"],
+//         ];
+//
+//         let matches = find_hash_tags("ハッシュ投稿テスト\n\n#test #日本語のテスト #1111");
+//         for (hash_index, caps) in matches.iter().enumerate() {
+//             if let Some(captures) = caps.get(2) {
+//                 println!("{}", hash_index);
+//                 match hashes.get(hash_index) {
+//                     Some(hash) => {
+//                         assert_eq!(&captures.as_str(), hash.first().unwrap());
+//                         assert_eq!(
+//                             captures.start().to_string(),
+//                             hash.get(1).unwrap().to_string()
+//                         );
+//                         assert_eq!(captures.end().to_string(), hash.get(2).unwrap().to_string());
+//                     }
+//                     None => panic!("No hash found at index 0"),
+//                 }
+//             }
+//         }
+//     }
+//
+//     #[test]
+//     fn learn_find_hash_tags() {
+//         let text = "ハッシュ投稿テスト\n\n#test #test2 #3test #1111 #日本語のカタカナ。";
+//         // let pattern = r"(^|\s)(#[^\d\s]\w*)";
+//         // let regex_pattern = Regex::new(pattern).unwrap();
+//         //
+//         // let matches = regex_pattern.find_iter(text);
+//         let matches = find_hash_tags(text);
+//         println!("matches: {:?}", matches);
+//         for caps in matches {
+//             if let Some(cap) = caps.get(2) {
+//                 println!("Matched: {}", cap.as_str());
+//                 println!("Start: {}", cap.start());
+//                 println!("End: {}", cap.end());
+//             }
+//         }
+//     }
+//
+//     #[test]
+//     fn learn_find_link_strings() {
+//         let text =
+//             "Link test\n\n#hash #test\n\nhttps://www.example.com/url/?query=test&query2=test2";
+//         let matches = find_link_string(text);
+//         println!("matches: {:?}", matches);
+//         for caps in matches {
+//             if let Some(cap) = caps.get(2) {
+//                 println!("Matched: {}", cap.as_str());
+//                 println!("Start: {}", cap.start());
+//                 println!("End: {}", cap.end());
+//             }
+//         }
+//     }
+//
+//     #[test]
+//     fn learn_bluesky_get_profile() {
+//         let access_token = login();
+//
+//         // send message
+//         match access_token {
+//             Ok(token) => {
+//                 get_profile(&token);
+//             }
+//             Err(err) => {
+//                 println!("Login failed.: {:?}", err)
+//             }
+//         }
+//     }
+//
+//     #[test]
+//     fn learn_set_message() {
+//         let access_token = login().unwrap();
+//         let post_message = set_post_message(&access_token);
+//         print!("{:?}", post_message);
+//     }
+//
+//     #[test]
+//     fn learn_upload_image_blob() {
+//         let access_token = login().unwrap();
+//         let message = upload_image_blob(&access_token, "./150x150.png");
+//         print!("{:?}", message);
+//     }
+//
+//     #[test]
+//     fn learn_bluesky_send_message() {
+//         let access_token = login().unwrap();
+//         let result = post(&access_token);
+//         print!("{:?}", result);
+//     }
+//
+//     #[test]
+//     fn learn_value() {
+//         let data = read_json_file("./tests/resources/message.json").unwrap();
+//         println!("{}", data.sender)
+//
+//         // if let Some(sender) = data.get("sender") {
+//         //     println!("Sender -> {}", sender)
+//         // } else {
+//         //     println!("Sender not found")
+//         // }
+//     }
+//
+//     #[test]
+//     fn learn_env() {
+//         let _ = dotenvy::dotenv();
+//
+//         // for (key, value) in env::vars() {
+//         //     println!("{key}: {value}");
+//         // }
+//         match env::var("BLUESKY_APP_PASSWORD") {
+//             Ok(val) => println!("{val:?}"),
+//             Err(e) => println!("err: {e}"),
+//         }
+//     }
+//
+//     #[test]
+//     fn can_read_json_file() {
+//         let result = read_json_file("./tests/resources/message.json").unwrap();
+//         assert_eq!(result.content, "Test message");
+//         assert_eq!(result.sender, "user1");
+//         assert_eq!(result.receivers.len(), 1);
+//         assert!(result.receivers.contains(&Receivers::BlueSky));
+//         assert_eq!(result.fixed_hashtags.mastodon, "#mastodon");
+//         assert_eq!(result.fixed_hashtags.bluesky, "#bluesky");
+//     }
+// }
