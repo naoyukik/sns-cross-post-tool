@@ -1,6 +1,6 @@
-use std::path::Path;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use url::Url;
 
 fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
@@ -54,10 +54,30 @@ fn extract(html: Vec<u8>) -> Ogp {
     let image_selector = Selector::parse("meta[property='og:image']").unwrap();
     let url_selector = Selector::parse("meta[property='og:url']").unwrap();
     Ogp {
-        title: fragment.select(&title_selector).next().map(|element| element.value().attr("content").unwrap_or("")).unwrap_or("").to_string(),
-        desc: fragment.select(&description_selector).next().map(|element| element.value().attr("content").unwrap_or("")).unwrap_or("").to_string(),
-        image: fragment.select(&image_selector).next().map(|element| element.value().attr("content").unwrap_or("")).unwrap_or("").to_string(),
-        url: fragment.select(&url_selector).next().map(|element| element.value().attr("content").unwrap_or("")).unwrap_or("").to_string(),
+        title: fragment
+            .select(&title_selector)
+            .next()
+            .map(|element| element.value().attr("content").unwrap_or(""))
+            .unwrap_or("")
+            .to_string(),
+        desc: fragment
+            .select(&description_selector)
+            .next()
+            .map(|element| element.value().attr("content").unwrap_or(""))
+            .unwrap_or("")
+            .to_string(),
+        image: fragment
+            .select(&image_selector)
+            .next()
+            .map(|element| element.value().attr("content").unwrap_or(""))
+            .unwrap_or("")
+            .to_string(),
+        url: fragment
+            .select(&url_selector)
+            .next()
+            .map(|element| element.value().attr("content").unwrap_or(""))
+            .unwrap_or("")
+            .to_string(),
     }
 }
 
@@ -69,7 +89,7 @@ pub fn get(url: String) -> Result<Ogp, curl::Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::ogp::{extract, get_html};
+    use crate::ogp::extract;
 
     // #[test]
     // fn can_scrape_html() {
@@ -92,7 +112,9 @@ mod tests {
                 <meta property="og:description" content="Description of the page.">
                 <meta property="og:image" content="https://example.com/sample.jpg">
                 <meta property="og:url" content="https://example.com/">
-            </head></html>"#.as_bytes().to_vec();
+            </head></html>"#
+            .as_bytes()
+            .to_vec();
 
         let ogp = extract(html);
         assert_eq!(ogp.title, "Example Page Title");
@@ -104,7 +126,9 @@ mod tests {
     #[test]
     fn empty_extract_ogp() {
         let html = r#"<html><head>
-            </head></html>"#.as_bytes().to_vec();
+            </head></html>"#
+            .as_bytes()
+            .to_vec();
 
         let ogp = extract(html);
         assert_eq!(ogp.title, "");
