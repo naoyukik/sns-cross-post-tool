@@ -1,5 +1,5 @@
-use crate::bluesky::domain::dto::access_token_dto::AccessTokenDto;
+use crate::bluesky::domain::login::access_token::AccessToken;
 
 pub trait LoginRepository {
-    fn login() -> Result<AccessTokenDto, curl::Error>;
+    fn login() -> Result<AccessToken, curl::Error>;
 }

@@ -1,94 +1,24 @@
+use crate::bluesky::application::dto::embed_dto::EmbedDto;
 use crate::ogp::Ogp;
-use crate::{ogp_scraping, set_headers, AccessToken};
+use crate::{ogp_scraping, set_headers};
 use curl::easy::Easy;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use url::Url;
+use crate::bluesky::application::dto::access_token_dto::AccessToken;
 
-pub fn create(access_token: &AccessToken, ogp: &Ogp) -> Embed {
+pub fn create_website_card_embeds(access_token: &AccessToken, ogp: &Ogp) -> EmbedDto {
     let dest = ".";
     ogp_scraping::fetch_image_by_ogp(ogp, dest);
     let ogp_image_path = format!("{}/{}", dest, ogp.get_image_name());
-    let ogp_image_blob = upload_image_blob(access_token, ogp_image_path.as_str());
-    let thumb = Thumb::create(ogp, ogp_image_blob);
-    let external = External::create(ogp, thumb);
-    Embed::create(external)
+    let uploaded_image_blob = upload_image_blob(access_token, ogp_image_path.as_str());
+    // let thumb = Thumb::create(ogp, ogp_image_blob);
+    // let external = External::create(ogp, thumb);
+    EmbedDto::create(ogp, &uploaded_image_blob)
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct EmbedRoot {
-//     embed: Embed,
-// }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Embed {
-    #[serde(rename = "$type")]
-    _type: String,
-    external: External,
-}
-
-impl Embed {
-    pub fn create(external: External) -> Embed {
-        Embed {
-            _type: "app.bsky.embed.external".to_string(),
-            external,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct External {
-    uri: String,
-    thumb: Thumb,
-    title: String,
-    description: String,
-}
-
-impl External {
-    fn create(ogp: &Ogp, thumbnail: Thumb) -> External {
-        let uri = &ogp.url;
-        let title = &ogp.title;
-        let desc = &ogp.desc;
-        External {
-            uri: uri.to_string(),
-            thumb: thumbnail,
-            title: title.to_string(),
-            description: desc.to_string(),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Thumb {
-    #[serde(rename = "$type")]
-    _type: String,
-    #[serde(rename = "ref")]
-    r#ref: Ref,
-    #[serde(rename = "mimeType")]
-    mime_type: String,
-    size: u64,
-}
-
-impl Thumb {
-    fn create(ogp: &Ogp, blob: UploadImageBlobToResponse) -> Thumb {
-        let extension = ogp.get_image_extension();
-        let image_type = extension_to_image_type(extension.as_str());
-        let mime_type = get_mime_type(image_type);
-        let file_name = ogp.get_image_name();
-        let file_size = get_file_size(format!("./{}", file_name).as_str());
-        let ref_data = blob.r#ref;
-
-        Thumb {
-            _type: "blob".to_string(),
-            r#ref: ref_data,
-            mime_type: mime_type.to_string(),
-            size: file_size,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Ref {
     #[serde(rename = "$link")]
     _link: String,
@@ -101,7 +31,7 @@ impl Ref {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct UploadImageBlobToResponse {
+pub struct UploadedImageBlobDto {
     #[serde(rename = "$type")]
     _type: String,
     #[serde(rename = "ref")]
@@ -111,9 +41,9 @@ pub struct UploadImageBlobToResponse {
     size: u64,
 }
 
-impl UploadImageBlobToResponse {
-    fn create(blob: &serde_json::Value) -> UploadImageBlobToResponse {
-        UploadImageBlobToResponse {
+impl UploadedImageBlobDto {
+    fn create(blob: &serde_json::Value) -> UploadedImageBlobDto {
+        UploadedImageBlobDto {
             _type: blob["$type"].to_string().replace('\"', ""),
             r#ref: Ref {
                 _link: blob["ref"]["$link"].to_string().replace('\"', ""),
@@ -122,12 +52,25 @@ impl UploadImageBlobToResponse {
             size: blob["size"].as_u64().unwrap(),
         }
     }
+
+    pub fn get_type(&self) -> String {
+        self._type.to_string()
+    }
+
+    pub fn get_ref(&self) -> Ref {
+        self.r#ref.clone()
+    }
+
+    pub fn get_mime_type(&self) -> String {
+        self.mime_type.to_string()
+    }
+
+    pub fn get_size(&self) -> u64 {
+        self.size
+    }
 }
 
-pub fn upload_image_blob(
-    access_token: &AccessToken,
-    file_path: &str,
-) -> UploadImageBlobToResponse {
+pub fn upload_image_blob(access_token: &AccessToken, file_path: &str) -> UploadedImageBlobDto {
     let data = fs::read(file_path).expect("Failed to read the file.");
 
     if data.len() > 1_000_000 {
@@ -165,7 +108,7 @@ pub fn upload_image_blob(
     let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
     let blob = &res_json["blob"];
 
-    UploadImageBlobToResponse::create(blob)
+    UploadedImageBlobDto::create(blob)
 }
 
 fn get_file_size(file_path: &str) -> u64 {

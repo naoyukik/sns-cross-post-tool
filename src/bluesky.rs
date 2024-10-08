@@ -132,19 +132,19 @@ struct TextEntry {
 //     Ok(true)
 // }
 
-fn get_account() -> LoginCredentials {
-    let _ = dotenvy::dotenv().expect("Failed to load .env file");
-
-    let identifier = env::var("BLUESKY_LOGIN_NAME")
-        .expect("Please set the BLUESKY_LOGIN_NAME environment variable");
-    let password = env::var("BLUESKY_APP_PASSWORD")
-        .expect("Please set the BLUESKY_APP_PASSWORD environment variable");
-
-    LoginCredentials {
-        identifier,
-        password,
-    }
-}
+// fn get_account() -> LoginCredentials {
+//     let _ = dotenvy::dotenv().expect("Failed to load .env file");
+//
+//     let identifier = env::var("BLUESKY_LOGIN_NAME")
+//         .expect("Please set the BLUESKY_LOGIN_NAME environment variable");
+//     let password = env::var("BLUESKY_APP_PASSWORD")
+//         .expect("Please set the BLUESKY_APP_PASSWORD environment variable");
+//
+//     LoginCredentials {
+//         identifier,
+//         password,
+//     }
+// }
 
 fn set_post_message(access_token: &AccessToken) -> CommitMessage {
     let account = get_account();
@@ -207,85 +207,85 @@ struct Facet {
     features: Vec<FacetFeatures>,
 }
 
-fn tags_to_facet_features(tag: &str) -> Vec<FacetFeatures> {
-    let re = Regex::new(r"^#").unwrap();
-    vec![FacetFeatures {
-        facet_type: "app.bsky.richtext.facet#tag".to_string(),
-        feature_mode: FeatureMode::Tag(re.replace(tag.trim(), "").to_string()),
-    }]
-}
+// fn tags_to_facet_features(tag: &str) -> Vec<FacetFeatures> {
+//     let re = Regex::new(r"^#").unwrap();
+//     vec![FacetFeatures {
+//         facet_type: "app.bsky.richtext.facet#tag".to_string(),
+//         feature_mode: FeatureMode::Tag(re.replace(tag.trim(), "").to_string()),
+//     }]
+// }
+//
+// fn links_to_facet_features(tag: &str) -> Vec<FacetFeatures> {
+//     vec![FacetFeatures {
+//         facet_type: "app.bsky.richtext.facet#link".to_string(),
+//         feature_mode: FeatureMode::Uri(tag.trim().to_string()),
+//     }]
+// }
 
-fn links_to_facet_features(tag: &str) -> Vec<FacetFeatures> {
-    vec![FacetFeatures {
-        facet_type: "app.bsky.richtext.facet#link".to_string(),
-        feature_mode: FeatureMode::Uri(tag.trim().to_string()),
-    }]
-}
+// fn create_tags_facets(message_content: &str) -> Vec<Facet> {
+//     find_hash_tags(message_content)
+//         .iter()
+//         .filter_map(|capture| {
+//             capture
+//                 .get(2)
+//                 .map(|cap| to_facet(cap, FeatureMode::Tag("Tag".to_string())))
+//         })
+//         .collect()
+// }
+//
+// fn create_links_facets(message_content: &str) -> Vec<Facet> {
+//     find_link_string(message_content)
+//         .iter()
+//         .filter_map(|capture| {
+//             capture
+//                 .get(2)
+//                 .map(|cap| to_facet(cap, FeatureMode::Uri("Uri".to_string())))
+//         })
+//         .collect()
+// }
+//
+// fn find_hash_tags(haystack: &str) -> Vec<Captures> {
+//     let pattern = r"(^|\s)(#\w*)";
+//     let regex_pattern = Regex::new(pattern).unwrap();
+//     regex_pattern.captures_iter(haystack).collect()
+// }
+//
+// fn find_link_string(haystack: &str) -> Vec<Captures> {
+//     let pattern = r"(^|\s)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))";
+//     let regex = Regex::new(pattern).unwrap();
+//     regex.captures_iter(haystack).collect()
+// }
 
-fn create_tags_facets(message_content: &str) -> Vec<Facet> {
-    find_hash_tags(message_content)
-        .iter()
-        .filter_map(|capture| {
-            capture
-                .get(2)
-                .map(|cap| to_facet(cap, FeatureMode::Tag("Tag".to_string())))
-        })
-        .collect()
-}
+// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+// #[serde(rename_all = "lowercase")]
+// enum FeatureMode {
+//     Tag(String),
+//     Uri(String),
+// }
+//
+// fn to_facet(capture_group: Match, feature_mode: FeatureMode) -> Facet {
+//     let start = capture_group.start() as u16;
+//     let end = capture_group.end() as u16;
+//     let match_str = capture_group.as_str();
+//     Facet {
+//         index: to_facet_index(&start, &end),
+//         features: handle_facet_feature(feature_mode, match_str),
+//     }
+// }
 
-fn create_links_facets(message_content: &str) -> Vec<Facet> {
-    find_link_string(message_content)
-        .iter()
-        .filter_map(|capture| {
-            capture
-                .get(2)
-                .map(|cap| to_facet(cap, FeatureMode::Uri("Uri".to_string())))
-        })
-        .collect()
-}
-
-fn find_hash_tags(haystack: &str) -> Vec<Captures> {
-    let pattern = r"(^|\s)(#\w*)";
-    let regex_pattern = Regex::new(pattern).unwrap();
-    regex_pattern.captures_iter(haystack).collect()
-}
-
-fn find_link_string(haystack: &str) -> Vec<Captures> {
-    let pattern = r"(^|\s)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))";
-    let regex = Regex::new(pattern).unwrap();
-    regex.captures_iter(haystack).collect()
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "lowercase")]
-enum FeatureMode {
-    Tag(String),
-    Uri(String),
-}
-
-fn to_facet(capture_group: Match, feature_mode: FeatureMode) -> Facet {
-    let start = capture_group.start() as u16;
-    let end = capture_group.end() as u16;
-    let match_str = capture_group.as_str();
-    Facet {
-        index: to_facet_index(&start, &end),
-        features: handle_facet_feature(feature_mode, match_str),
-    }
-}
-
-fn handle_facet_feature(feature_mode: FeatureMode, match_str: &str) -> Vec<FacetFeatures> {
-    match feature_mode {
-        FeatureMode::Tag(_) => tags_to_facet_features(match_str),
-        FeatureMode::Uri(_) => links_to_facet_features(match_str),
-    }
-}
-
-fn to_facet_index(start: &u16, end: &u16) -> FacetIndex {
-    FacetIndex {
-        byte_start: *start,
-        byte_end: *end,
-    }
-}
+// fn handle_facet_feature(feature_mode: FeatureMode, match_str: &str) -> Vec<FacetFeatures> {
+//     match feature_mode {
+//         FeatureMode::Tag(_) => tags_to_facet_features(match_str),
+//         FeatureMode::Uri(_) => links_to_facet_features(match_str),
+//     }
+// }
+//
+// fn to_facet_index(start: &u16, end: &u16) -> FacetIndex {
+//     FacetIndex {
+//         byte_start: *start,
+//         byte_end: *end,
+//     }
+// }
 
 // mod website_card_embeds {
 //     use crate::bluesky::create_header;

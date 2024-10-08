@@ -1,8 +1,8 @@
-use crate::bluesky::domain::dto::access_token_dto::AccessTokenDto;
+use crate::bluesky::application::dto::access_token_dto::AccessToken;
 use crate::bluesky::domain::login::login_repository::LoginRepository;
 use crate::bluesky::infrastructure::login_repository_impl::LoginRepositoryImpl;
 
-pub fn login() -> AccessTokenDto {
+pub fn login() -> AccessToken {
     let login_result = LoginRepositoryImpl::login();
     match login_result {
         Ok(dto) => dto,

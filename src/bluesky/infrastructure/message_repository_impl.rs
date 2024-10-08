@@ -1,22 +1,24 @@
-use curl::easy::Easy;
-use crate::bluesky::domain::dto::access_token_dto::AccessTokenDto;
-use crate::bluesky::domain::dto::commit_message_dto::CommitMessageDto;
+use crate::bluesky::application::dto::access_token_dto::AccessToken;
+use crate::bluesky::application::dto::commit_message_dto::CommitMessageDto;
 use crate::bluesky::domain::http::create_header;
 use crate::bluesky::domain::message::message_repository::MessageRepository;
 use crate::util::set_headers;
+use curl::easy::Easy;
 
 pub struct MessageRepositoryImpl {}
 
 impl MessageRepository for MessageRepositoryImpl {
-    fn send(access_token: &AccessTokenDto, post_data: &CommitMessageDto) -> Result<bool, curl::Error> {
+    fn send(
+        access_token: &AccessToken,
+        post_data: &CommitMessageDto,
+    ) -> Result<bool, curl::Error> {
         let mut curl = Easy::new();
-        curl.url("https://bsky.social/xrpc/com.atproto.repo.createRecord")
-            .unwrap();
-        curl.post(true).unwrap();
+        curl.url("https://bsky.social/xrpc/com.atproto.repo.createRecord")?;
+        curl.post(true)?;
 
         let headers = create_header(access_token, "application/json");
         let header_list = set_headers(headers);
-        curl.http_headers(header_list).unwrap();
+        curl.http_headers(header_list)?;
 
         // let post_data = set_post_message(access_token);
         let binding = serde_json::to_string::<CommitMessageDto>(&post_data).unwrap();
@@ -25,7 +27,7 @@ impl MessageRepository for MessageRepositoryImpl {
             "POST data: {:?}",
             String::from_utf8(serialized.to_vec()).unwrap()
         );
-        curl.post_fields_copy(serialized).unwrap();
+        curl.post_fields_copy(serialized)?;
 
         let mut response_data = Vec::new();
         {

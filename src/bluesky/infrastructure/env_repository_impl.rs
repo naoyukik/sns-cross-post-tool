@@ -1,9 +1,9 @@
-use crate::bluesky::domain::dto::login_credential_dto::LoginCredentialDto;
+use crate::bluesky::application::dto::login_credential_dto::LoginCredentialDto;
 use crate::bluesky::domain::env::env_repository::EnvRepository;
 use std::env;
 use std::path::Path;
 
-struct EnvRepositoryImpl {}
+pub struct EnvRepositoryImpl {}
 
 impl EnvRepository for EnvRepositoryImpl {
     fn get_login_credential(env_path: String) -> LoginCredentialDto {

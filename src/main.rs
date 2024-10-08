@@ -19,6 +19,7 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::process::exit;
+use crate::mastodon::send_message;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -35,17 +36,21 @@ fn main() {
 
     for receiver in message.receivers {
         match receiver {
-            Receivers::BlueSky => match login() {
-                Ok(token) => {
-                    match post(&token) {
-                        Ok(_) => println!("Bluesky: Message has been sent successfully."),
-                        Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
-                    };
-                }
-                Err(err) => {
-                    println!("Login failed.: {:?}", err)
-                }
+            Receivers::BlueSky => match post() {
+                Ok(_) => println!("Bluesky: Message has been sent successfully."),
+                Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
             },
+            // Receivers::BlueSky => match login() {
+            //     Ok(token) => {
+            //         match post(&token) {
+            //             Ok(_) => println!("Bluesky: Message has been sent successfully."),
+            //             Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
+            //         };
+            //     }
+            //     Err(err) => {
+            //         println!("Login failed.: {:?}", err)
+            //     }
+            // },
             Receivers::Mastodon => {
                 let config = mastodon::set_config();
                 let api_client = mastodon::ApiClient { config };
