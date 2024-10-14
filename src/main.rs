@@ -1,10 +1,17 @@
-mod bluesky;
+mod bluesky {
+    pub mod application;
+    pub mod domain;
+    pub mod infrastructure;
+    pub mod presentation;
+    pub mod util;
+}
 mod mastodon;
 mod ogp;
 mod ogp_scraping;
+mod util;
 
-use crate::bluesky::{login, send_message};
-use chrono::Utc;
+use crate::bluesky::presentation::message_resolver::post;
+use crate::mastodon::send_message;
 use curl::easy::List;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -29,16 +36,9 @@ fn main() {
 
     for receiver in message.receivers {
         match receiver {
-            Receivers::BlueSky => match login() {
-                Ok(token) => {
-                    match send_message(&token) {
-                        Ok(_) => println!("Bluesky: Message has been sent successfully."),
-                        Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
-                    };
-                }
-                Err(err) => {
-                    println!("Login failed.: {:?}", err)
-                }
+            Receivers::BlueSky => match post() {
+                Ok(_) => println!("Bluesky: Message has been sent successfully."),
+                Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
             },
             Receivers::Mastodon => {
                 let config = mastodon::set_config();
@@ -81,17 +81,13 @@ enum Receivers {
     Mastodon,
 }
 
+// TODO Delete the reference when you are done with mastodon.
 pub fn set_headers(header_list: Vec<String>) -> List {
     let mut headers = List::new();
     for header in header_list {
         headers.append(header.as_str()).unwrap();
     }
     headers
-}
-
-pub fn get_current_time() -> String {
-    let now = Utc::now();
-    now.format("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
 pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
@@ -101,6 +97,7 @@ pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
     serde_json::from_str::<T>(sliced_res).unwrap()
 }
 
+// TODO Delete the reference when you are done with mastodon.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccessToken {
     access_token: String,
