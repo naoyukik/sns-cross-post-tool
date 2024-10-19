@@ -1,5 +1,5 @@
 use crate::mastodon::domain::message::model::commit_message::CommitMessage;
-use crate::read_json_file;
+use crate::util::read_json_file;
 
 pub fn set_post_message() -> CommitMessage {
     let message = read_json_file("message.json").unwrap();
