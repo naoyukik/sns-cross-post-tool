@@ -17,7 +17,7 @@ impl MessageRepository for MessageRepositoryImpl {
         let header_list = set_headers(headers);
         curl.http_headers(header_list)?;
 
-        let binding = serde_json::to_string::<CommitMessage>(&post_data).unwrap();
+        let binding = serde_json::to_string::<CommitMessage>(post_data).unwrap();
         let serialized = binding.as_bytes();
         println!(
             "POST data: {:?}",

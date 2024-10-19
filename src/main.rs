@@ -21,10 +21,10 @@ use crate::mastodon::presentation::message_resolver::post as mPost;
 use crate::util::read_json_file;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use serde_json::Error;
+
 use std::env;
-use std::fs::File;
-use std::io::BufReader;
+
+
 use std::process::exit;
 
 fn main() {

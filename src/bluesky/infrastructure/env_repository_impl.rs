@@ -8,7 +8,7 @@ pub struct EnvRepositoryImpl {}
 impl EnvRepository for EnvRepositoryImpl {
     fn get_login_credential(env_file_path: String) -> LoginCredentialDto {
         let env_path = Path::new(&env_file_path);
-        let _ = dotenvy::from_path(env_path).expect("Failed to load .env file");
+        dotenvy::from_path(env_path).expect("Failed to load .env file");
 
         let identifier = env::var("BLUESKY_LOGIN_NAME")
             .expect("Please set the BLUESKY_LOGIN_NAME environment variable");
@@ -30,6 +30,6 @@ mod tests {
     #[test]
     fn can_login_credentials_new() {
         let env_path = "./tests/resources/.env".to_string();
-        let credentials = EnvRepositoryImpl::get_login_credential(env_path);
+        let _credentials = EnvRepositoryImpl::get_login_credential(env_path);
     }
 }
