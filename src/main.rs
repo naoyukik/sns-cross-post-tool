@@ -5,13 +5,19 @@ mod bluesky {
     pub mod presentation;
     pub mod util;
 }
-mod mastodon;
+mod mastodon {
+    pub mod application;
+    pub mod domain;
+    pub mod infrastructure;
+    pub mod presentation;
+    pub mod util;
+}
 mod ogp;
 mod ogp_scraping;
 mod util;
 
 use crate::bluesky::presentation::message_resolver::post;
-use crate::mastodon::send_message;
+use crate::mastodon::presentation::message_resolver::post as mPost;
 use curl::easy::List;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -40,13 +46,9 @@ fn main() {
                 Ok(_) => println!("Bluesky: Message has been sent successfully."),
                 Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
             },
-            Receivers::Mastodon => {
-                let config = mastodon::set_config();
-                let api_client = mastodon::ApiClient { config };
-                match mastodon::send_message(api_client) {
-                    Ok(_) => println!("Mastodon: Message has been sent successfully."),
-                    Err(err) => println!("Mastodon: Failed to send the message: {:?}", err),
-                }
+            Receivers::Mastodon => match mPost() {
+                Ok(_) => println!("Mastodon: Message has been sent successfully."),
+                Err(err) => println!("Mastodon: Failed to send the message: {:?}", err),
             }
         }
     }
