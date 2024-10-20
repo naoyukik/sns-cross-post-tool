@@ -35,12 +35,6 @@ impl Ogp {
         file_name.to_string_lossy().to_string()
     }
 
-    pub fn get_image_extension(&self) -> String {
-        let url = self.parse_image_to_url_type();
-        let extension = Path::new(url.as_str()).extension().unwrap();
-        extension.to_string_lossy().to_string()
-    }
-
     fn parse_image_to_url_type(&self) -> Url {
         Url::parse(&self.image).unwrap()
     }
