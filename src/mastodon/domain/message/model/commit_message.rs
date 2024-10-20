@@ -11,8 +11,4 @@ impl CommitMessage {
             status: status.to_string(),
         }
     }
-
-    pub fn get_status(&self) -> String {
-        self.status.to_string()
-    }
 }
