@@ -23,10 +23,6 @@ impl UploadedImageBlob {
         }
     }
 
-    pub fn get_type(&self) -> String {
-        self._type.to_string()
-    }
-
     pub fn get_ref(&self) -> UploadedImageBlobRef {
         self.r#ref.clone()
     }
