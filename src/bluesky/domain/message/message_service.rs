@@ -31,7 +31,7 @@ pub fn set_post_message(access_token: &AccessToken) -> CommitMessage {
         embed,
     };
     CommitMessage {
-        repo: account.identifier,
+        repo: account.get_identifier(),
         collection: "app.bsky.feed.post".to_string(),
         record,
     }

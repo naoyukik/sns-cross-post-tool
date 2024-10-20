@@ -13,4 +13,8 @@ impl LoginCredential {
             password,
         }
     }
+
+    pub fn get_identifier(&self) -> String {
+        self.identifier.to_string()
+    }
 }
