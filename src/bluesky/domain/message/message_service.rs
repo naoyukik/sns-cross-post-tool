@@ -4,8 +4,8 @@ use crate::bluesky::domain::message::facet_service::create_facets;
 use crate::bluesky::domain::message::model::commit_message::{CommitMessage, CommitMessageRecord};
 use crate::bluesky::domain::website_card_embeds::website_card_embeds_service::create_website_card_embeds;
 use crate::bluesky::infrastructure::env_repository_impl::EnvRepositoryImpl;
-use crate::util::get_current_time;
-use crate::{ogp_scraping, read_json_file, util};
+use crate::util::{get_current_time, read_json_file};
+use crate::{ogp_scraping, util};
 
 pub fn set_post_message(access_token: &AccessToken) -> CommitMessage {
     let account = EnvRepositoryImpl::get_login_credential("./.env".to_string());

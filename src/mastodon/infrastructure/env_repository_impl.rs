@@ -35,6 +35,6 @@ mod tests {
     #[test]
     fn can_login_credentials_new() {
         let env_path = "./tests/resources/.env".to_string();
-        let credentials = EnvRepositoryImpl::get_login_credential(env_path);
+        let _credentials = EnvRepositoryImpl::get_login_credential(env_path);
     }
 }

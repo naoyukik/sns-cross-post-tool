@@ -33,7 +33,7 @@ fn upload_image_blob(access_token: &AccessToken, file_path: &str) -> UploadedIma
     let endpoint = "https://bsky.social/xrpc/com.atproto.repo.uploadBlob";
     curl.url(endpoint).unwrap();
     let content_type = "image/png";
-    let headers = create_header(&access_token, content_type);
+    let headers = create_header(access_token, content_type);
     let mut header_list = set_headers(headers);
     header_list.append("Accept: application/json").unwrap();
     curl.http_headers(header_list).unwrap();

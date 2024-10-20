@@ -18,13 +18,13 @@ mod util;
 
 use crate::bluesky::presentation::message_resolver::post;
 use crate::mastodon::presentation::message_resolver::post as mPost;
-use curl::easy::List;
+use crate::util::read_json_file;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use serde_json::Error;
+
 use std::env;
-use std::fs::File;
-use std::io::BufReader;
+
+
 use std::process::exit;
 
 fn main() {
@@ -54,14 +54,14 @@ fn main() {
     }
 }
 
-pub fn read_json_file(file_path: &str) -> Result<Message, Error> {
-    let file = File::open(file_path).expect("File not found");
-    let reader = BufReader::new(file);
-
-    let json_object: Message = serde_json::from_reader(reader)?;
-
-    Ok(json_object)
-}
+// pub fn read_json_file(file_path: &str) -> Result<Message, Error> {
+//     let file = File::open(file_path).expect("File not found");
+//     let reader = BufReader::new(file);
+// 
+//     let json_object: Message = serde_json::from_reader(reader)?;
+// 
+//     Ok(json_object)
+// }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Message {
@@ -83,24 +83,9 @@ enum Receivers {
     Mastodon,
 }
 
-// TODO Delete the reference when you are done with mastodon.
-pub fn set_headers(header_list: Vec<String>) -> List {
-    let mut headers = List::new();
-    for header in header_list {
-        headers.append(header.as_str()).unwrap();
-    }
-    headers
-}
-
 pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
     let res_string = String::from_utf8(response_data).unwrap();
     println!("{}", res_string);
     let sliced_res = res_string.as_str();
     serde_json::from_str::<T>(sliced_res).unwrap()
-}
-
-// TODO Delete the reference when you are done with mastodon.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct AccessToken {
-    access_token: String,
 }

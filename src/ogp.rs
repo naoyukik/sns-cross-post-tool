@@ -5,7 +5,7 @@ use url::Url;
 
 fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
     let mut easy = curl::easy::Easy::new();
-    easy.url(&url)?;
+    easy.url(url)?;
     let mut html = Vec::new();
 
     {
