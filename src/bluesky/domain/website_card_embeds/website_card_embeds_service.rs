@@ -7,8 +7,6 @@ use crate::ogp_scraping;
 use crate::util::set_headers;
 use curl::easy::Easy;
 use std::fs;
-use std::path::Path;
-use url::Url;
 
 pub fn create_website_card_embeds(access_token: &AccessToken, ogp: &Ogp) -> Embed {
     let dest = ".";
@@ -57,49 +55,4 @@ fn upload_image_blob(access_token: &AccessToken, file_path: &str) -> UploadedIma
     let blob = &res_json["blob"];
 
     UploadedImageBlob::new(blob)
-}
-
-fn get_file_size(file_path: &str) -> u64 {
-    fs::metadata(file_path).unwrap().len()
-}
-
-enum ImageType {
-    JPEG,
-    PNG,
-    GIF,
-    WebP,
-    SVG,
-    Unknown,
-}
-
-fn get_mime_type(image_type: ImageType) -> &'static str {
-    match image_type {
-        ImageType::JPEG => "image/jpeg",
-        ImageType::PNG => "image/png",
-        ImageType::GIF => "image/gif",
-        ImageType::WebP => "image/webp",
-        ImageType::SVG => "image/svg+xml",
-        ImageType::Unknown => "",
-    }
-}
-
-fn get_extension(url: &Url) -> String {
-    let extension = Path::new(url.as_str()).extension().unwrap();
-    extension.to_string_lossy().to_string()
-}
-
-fn extension_to_image_type(extension: &str) -> ImageType {
-    match extension.to_lowercase().as_str() {
-        "jpg" | "jpeg" => ImageType::JPEG,
-        "png" => ImageType::PNG,
-        "gif" => ImageType::GIF,
-        "webp" => ImageType::WebP,
-        "svg" => ImageType::SVG,
-        _ => ImageType::Unknown,
-    }
-}
-
-fn get_file_name(url: &Url) -> String {
-    let file_name = Path::new(url.as_str()).file_name().unwrap();
-    file_name.to_string_lossy().to_string()
 }

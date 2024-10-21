@@ -1,12 +1,12 @@
-use crate::bluesky::application::dto::login_credential_dto::LoginCredentialDto;
 use crate::bluesky::domain::env::env_repository::EnvRepository;
 use std::env;
 use std::path::Path;
+use crate::bluesky::domain::login::model::login_credential::LoginCredential;
 
 pub struct EnvRepositoryImpl {}
 
 impl EnvRepository for EnvRepositoryImpl {
-    fn get_login_credential(env_file_path: String) -> LoginCredentialDto {
+    fn get_login_credential(env_file_path: String) -> LoginCredential {
         let env_path = Path::new(&env_file_path);
         dotenvy::from_path(env_path).expect("Failed to load .env file");
 
@@ -15,10 +15,7 @@ impl EnvRepository for EnvRepositoryImpl {
         let password = env::var("BLUESKY_APP_PASSWORD")
             .expect("Please set the BLUESKY_APP_PASSWORD environment variable");
 
-        LoginCredentialDto {
-            identifier,
-            password,
-        }
+        LoginCredential::new(identifier, password)
     }
 }
 

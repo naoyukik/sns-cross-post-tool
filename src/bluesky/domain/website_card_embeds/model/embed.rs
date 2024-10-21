@@ -80,8 +80,4 @@ impl EmbedExternalThumbRef {
             _link: url.to_string(),
         }
     }
-
-    fn get_link(&self) -> &str {
-        &self._link
-    }
 }
