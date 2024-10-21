@@ -42,7 +42,7 @@ fn main() {
 
     for receiver in message.receivers {
         match receiver {
-            Receivers::BlueSky => match post() {
+            Receivers::Bluesky => match post() {
                 Ok(_) => println!("Bluesky: Message has been sent successfully."),
                 Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
             },
@@ -79,7 +79,7 @@ struct FixedHashtags {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 enum Receivers {
-    BlueSky,
+    Bluesky,
     Mastodon,
 }
 
