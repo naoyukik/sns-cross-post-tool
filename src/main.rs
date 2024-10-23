@@ -66,7 +66,6 @@ fn main() {
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Message {
     content: String,
-    sender: String,
     receivers: Vec<Receivers>,
     fixed_hashtags: FixedHashtags,
 }

@@ -1,6 +1,5 @@
 {
   "content": "Test message",
-  "sender": "user1",
   "receivers": ["Bluesky"],
   "fixed_hashtags": {
     "mastodon":  "",
