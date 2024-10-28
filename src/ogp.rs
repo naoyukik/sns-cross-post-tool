@@ -1,12 +1,16 @@
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use curl::easy::List;
 use url::Url;
 
 fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
     let mut easy = curl::easy::Easy::new();
     easy.url(url)?;
     let mut html = Vec::new();
+    let mut list = List::new();
+    list.append("User-Agent: SNS-Cross-Post-Tool")?;
+    easy.http_headers(list)?;
 
     {
         let mut transfer = easy.transfer();
