@@ -20,7 +20,7 @@ impl LoginRepository for LoginRepositoryImpl {
         let post_data = EnvRepositoryImpl::get_login_credential("./.env".to_string());
         let binding = serde_json::to_string(&post_data).unwrap();
         let serialized = binding.as_bytes();
-        println!(
+        debug!(
             "POST data: {:?}",
             String::from_utf8(serialized.to_vec()).unwrap()
         );
@@ -37,7 +37,7 @@ impl LoginRepository for LoginRepositoryImpl {
         let res_string = String::from_utf8(response_data).expect("Illegal JSON format");
         let sliced_res = res_string.as_str();
         let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
-        println!("login res_json {}", res_json);
+        debug!("login res_json {}", res_json);
         Ok(AccessToken::new(
             res_json["accessJwt"].to_string().replace('\"', ""),
         ))

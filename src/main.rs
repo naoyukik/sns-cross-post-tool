@@ -23,9 +23,12 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use std::env;
-
-
+use std::path::Path;
 use std::process::exit;
+
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -38,17 +41,19 @@ fn main() {
         exit(0)
     }
 
+    env_logger::init();
+
     let message = read_json_file("message.json").unwrap();
 
     for receiver in message.receivers {
         match receiver {
             Receivers::Bluesky => match post() {
-                Ok(_) => println!("Bluesky: Message has been sent successfully."),
-                Err(err) => println!("Bluesky: Failed to send the message: {:?}", err),
+                Ok(_) => info!("Bluesky: Message has been sent successfully."),
+                Err(err) => info!("Bluesky: Failed to send the message: {:?}", err),
             },
             Receivers::Mastodon => match mPost() {
-                Ok(_) => println!("Mastodon: Message has been sent successfully."),
-                Err(err) => println!("Mastodon: Failed to send the message: {:?}", err),
+                Ok(_) => info!("Mastodon: Message has been sent successfully."),
+                Err(err) => info!("Mastodon: Failed to send the message: {:?}", err),
             }
         }
     }
@@ -84,7 +89,7 @@ enum Receivers {
 
 pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
     let res_string = String::from_utf8(response_data).unwrap();
-    println!("{}", res_string);
+    debug!("{}", res_string);
     let sliced_res = res_string.as_str();
     serde_json::from_str::<T>(sliced_res).unwrap()
 }
