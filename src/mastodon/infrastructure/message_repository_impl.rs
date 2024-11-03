@@ -21,7 +21,7 @@ impl MessageRepository for MessageRepositoryImpl {
 
         let binding = serde_json::to_string(&post_data).unwrap();
         let serialized = binding.as_bytes();
-        println!(
+        debug!(
             "POST data: {:?}",
             String::from_utf8(serialized.to_vec()).unwrap()
         );
@@ -38,7 +38,7 @@ impl MessageRepository for MessageRepositoryImpl {
             transfer.perform()?;
         }
         let res_string = String::from_utf8(response_data).unwrap();
-        println!("{}", res_string);
+        debug!("{}", res_string);
         Ok(true)
     }
 }

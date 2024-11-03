@@ -28,7 +28,7 @@ pub fn fetch_image_by_ogp(ogp: &Ogp, dest: &str) {
         Err(why) => panic!("couldn't create {}: {}", dest, why),
     };
     match file.write_all(&response_data) {
-        Ok(_) => println!("Successfully wrote to {}", dest),
+        Ok(_) => info!("Successfully wrote to {}", dest),
         Err(why) => panic!("couldn't write to {}:{}", dest, why),
     }
 }

@@ -39,7 +39,7 @@ pub fn set_post_message(access_token: &AccessToken) -> CommitMessage {
 
 fn get_url_string(text: &str) -> String {
     let matches = util::find_link_string(text);
-    println!("matches: {:?}", matches);
+    debug!("matches: {:?}", matches);
     let mut url = "";
     for caps in matches {
         if let Some(cap) = caps.get(2) {
