@@ -9,7 +9,7 @@ use curl::easy::Easy;
 use std::fs;
 
 pub fn create_website_card_embeds(access_token: &AccessToken, ogp: &Ogp) -> Embed {
-    let dest = ".";
+    let dest = "./storage/downloaded_images";
     ogp_scraping::fetch_image_by_ogp(ogp, dest);
     let ogp_image_path = format!("{}/{}", dest, ogp.get_image_name());
     let uploaded_image_blob = upload_image_blob(access_token, ogp_image_path.as_str());
