@@ -48,12 +48,12 @@ fn main() {
     for receiver in message.receivers {
         match receiver {
             Receivers::Bluesky => match post() {
-                Ok(_) => info!("Bluesky: Message has been sent successfully."),
-                Err(err) => info!("Bluesky: Failed to send the message: {:?}", err),
+                Ok(_) => print!("Bluesky: Message has been sent successfully."),
+                Err(err) => error!("Bluesky: Failed to send the message: {:?}", err),
             },
             Receivers::Mastodon => match mPost() {
-                Ok(_) => info!("Mastodon: Message has been sent successfully."),
-                Err(err) => info!("Mastodon: Failed to send the message: {:?}", err),
+                Ok(_) => print!("Mastodon: Message has been sent successfully."),
+                Err(err) => error!("Mastodon: Failed to send the message: {:?}", err),
             }
         }
     }
