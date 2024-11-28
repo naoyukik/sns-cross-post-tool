@@ -36,8 +36,17 @@ impl MessageRepository for MessageRepositoryImpl {
                 .unwrap();
             transfer.perform().unwrap();
         }
-        let res_string = String::from_utf8(response_data).unwrap();
-        debug!("{}", res_string);
+        let res_string = String::from_utf8(response_data).expect("Illegal JSON format");
+        let sliced_res = res_string.as_str();
+        let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
+        debug!("send message res_json {}", res_json);
+
+        if let Some(error_value) = res_json.get("error") {
+            let error = error_value.as_str().unwrap_or("Unknown error");
+            let message = res_json.get("message").and_then(|m| m.as_str()).unwrap_or("No message provided");
+            panic!("Error: {}, Message: {}", error, message);
+        }
+
         Ok(true)
     }
 }
