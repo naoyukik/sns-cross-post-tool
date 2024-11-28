@@ -23,7 +23,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use std::env;
-use std::path::Path;
+
 use std::process::exit;
 
 #[macro_use]
