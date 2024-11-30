@@ -23,7 +23,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use std::env;
-use std::path::Path;
+
 use std::process::exit;
 
 #[macro_use]
@@ -41,19 +41,19 @@ fn main() {
         exit(0)
     }
 
-    env_logger::init();
+    set_logger();
 
     let message = read_json_file("message.json").unwrap();
 
     for receiver in message.receivers {
         match receiver {
             Receivers::Bluesky => match post() {
-                Ok(_) => info!("Bluesky: Message has been sent successfully."),
-                Err(err) => info!("Bluesky: Failed to send the message: {:?}", err),
+                Ok(_) => print!("Bluesky: Message has been sent successfully."),
+                Err(err) => error!("Bluesky: Failed to send the message: {:?}", err),
             },
             Receivers::Mastodon => match mPost() {
-                Ok(_) => info!("Mastodon: Message has been sent successfully."),
-                Err(err) => info!("Mastodon: Failed to send the message: {:?}", err),
+                Ok(_) => print!("Mastodon: Message has been sent successfully."),
+                Err(err) => error!("Mastodon: Failed to send the message: {:?}", err),
             }
         }
     }
@@ -92,4 +92,38 @@ pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
     debug!("{}", res_string);
     let sliced_res = res_string.as_str();
     serde_json::from_str::<T>(sliced_res).unwrap()
+}
+
+fn set_logger() {
+    env_logger::init_from_env(
+        env_logger::Env::new().filter("RUST_LOG")
+    );
+}
+
+#[cfg(test)]
+mod tests {
+    use std::env;
+    use dotenvy::dotenv;
+    use crate::set_logger;
+
+    #[test]
+    fn learn_environments() {
+        // Load environment variables from .env file
+        dotenv().ok();
+
+        // Print all environment variables
+        for (key, value) in env::vars() {
+            println!("{}: {}", key, value);
+        }
+    }
+
+    #[test]
+    fn learn_set_logger() {
+        set_logger();
+        trace!("trace log");
+        debug!("debug log");
+        info!("info log");
+        warn!("warn log");
+        error!("error log");
+    }
 }

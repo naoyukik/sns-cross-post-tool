@@ -1,3 +1,4 @@
+
 use crate::bluesky::domain::env::env_repository::EnvRepository;
 use crate::bluesky::domain::login::login_repository::LoginRepository;
 use crate::bluesky::domain::login::model::access_token::AccessToken;
@@ -34,10 +35,18 @@ impl LoginRepository for LoginRepositoryImpl {
             })?;
             transfer.perform()?;
         }
+
         let res_string = String::from_utf8(response_data).expect("Illegal JSON format");
         let sliced_res = res_string.as_str();
         let res_json: serde_json::Value = serde_json::from_str(sliced_res).unwrap();
         debug!("login res_json {}", res_json);
+
+        if let Some(error_value) = res_json.get("error") {
+            let error = error_value.as_str().unwrap_or("Unknown error");
+            let message = res_json.get("message").and_then(|m| m.as_str()).unwrap_or("No message provided");
+            panic!("Error: {}, Message: {}", error, message);
+        }
+
         Ok(AccessToken::new(
             res_json["accessJwt"].to_string().replace('\"', ""),
         ))
