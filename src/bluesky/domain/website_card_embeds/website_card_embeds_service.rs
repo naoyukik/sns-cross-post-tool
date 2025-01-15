@@ -8,12 +8,13 @@ use crate::util::set_headers;
 use curl::easy::Easy;
 use std::fs;
 
-pub fn create_website_card_embeds(access_token: &AccessToken, ogp: &Ogp) -> Embed {
+pub fn create_website_card_embeds(access_token: &AccessToken, ogp: &Ogp) -> Option<Embed> {
+    if ogp.image.is_empty() { return None; }
     let dest = "./storage/downloaded_images";
     ogp_scraping::fetch_image_by_ogp(ogp, dest);
     let ogp_image_path = format!("{}/{}", dest, ogp.get_image_name());
     let uploaded_image_blob = upload_image_blob(access_token, ogp_image_path.as_str());
-    Embed::new(ogp, &uploaded_image_blob)
+    Some(Embed::new(ogp, &uploaded_image_blob))
 }
 
 fn upload_image_blob(access_token: &AccessToken, file_path: &str) -> UploadedImageBlob {
