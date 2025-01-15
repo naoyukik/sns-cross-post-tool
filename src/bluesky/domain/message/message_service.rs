@@ -20,7 +20,7 @@ pub fn set_post_message(access_token: &AccessToken) -> CommitMessage {
     if !url_string.is_empty() {
         let ogp = ogp_scraping::fetch_ogp_data(url_string); // expect(&format!("Error occurred: Error"));
         if let Ok(ogp) = ogp {
-            embed = Some(create_website_card_embeds(access_token, &ogp));
+            embed = create_website_card_embeds(access_token, &ogp);
         }
     }
     let record = CommitMessageRecord {
