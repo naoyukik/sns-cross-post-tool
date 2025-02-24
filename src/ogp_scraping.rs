@@ -2,6 +2,7 @@ use crate::ogp;
 use crate::ogp::Ogp;
 use curl::easy::Easy;
 use std::fs::File;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::Write;
 
 pub fn fetch_image_by_ogp(ogp: &Ogp, dest: &str) {
@@ -22,7 +23,8 @@ pub fn fetch_image_by_ogp(ogp: &Ogp, dest: &str) {
     }
 
     let image_name = &ogp.get_image_name();
-    let file_path = format!("{}/{}", dest, image_name);
+    let temp_filename = create_temp_filename(image_name);
+    let file_path = format!("{}/{}", dest, temp_filename);
     let mut file = match File::create(file_path) {
         Ok(file) => file,
         Err(why) => panic!("couldn't create {}: {}", dest, why),
@@ -36,4 +38,10 @@ pub fn fetch_image_by_ogp(ogp: &Ogp, dest: &str) {
 pub fn fetch_ogp_data(url_string: String) -> Result<Ogp, curl::Error> {
     let ogp = ogp::get(url_string)?;
     Ok(ogp)
+}
+
+fn create_temp_filename(url: &str) -> String {
+    let mut hasher = DefaultHasher::new();
+    url.hash(&mut hasher);
+    format!("{}", hasher.finish())
 }
