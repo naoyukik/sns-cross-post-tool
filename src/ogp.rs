@@ -1,7 +1,7 @@
-use std::hash::{DefaultHasher, Hash, Hasher};
+use curl::easy::List;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
-use curl::easy::List;
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
     let mut easy = curl::easy::Easy::new();
@@ -64,12 +64,13 @@ fn extract(html: Vec<u8>) -> Ogp {
             .map(|element| element.value().attr("content").unwrap_or(""))
             .unwrap_or("")
             .to_string(),
-        save_file_name: create_temp_filename(fragment
-            .select(&image_selector)
-            .next()
-            .map(|element| element.value().attr("content").unwrap_or(""))
-            .unwrap_or("")
-        )
+        save_file_name: create_temp_filename(
+            fragment
+                .select(&image_selector)
+                .next()
+                .map(|element| element.value().attr("content").unwrap_or(""))
+                .unwrap_or(""),
+        ),
     }
 }
 
@@ -80,12 +81,13 @@ pub fn get(url: String) -> Result<Ogp, curl::Error> {
 }
 
 fn create_temp_filename(url: &str) -> String {
-    if url.is_empty() { return "".to_string(); }
+    if url.is_empty() {
+        return "".to_string();
+    }
     let mut hasher = DefaultHasher::new();
     url.hash(&mut hasher);
     format!("{}", hasher.finish())
 }
-
 
 #[cfg(test)]
 mod tests {
