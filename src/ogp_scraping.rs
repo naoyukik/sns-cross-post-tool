@@ -22,8 +22,7 @@ pub fn fetch_image_by_ogp(ogp: &Ogp, dest: &str) {
         transfer.perform().unwrap();
     }
 
-    let image_name = &ogp.get_image_name();
-    let temp_filename = create_temp_filename(image_name);
+    let temp_filename = &ogp.save_file_name;
     let file_path = format!("{}/{}", dest, temp_filename);
     let mut file = match File::create(file_path) {
         Ok(file) => file,
@@ -38,10 +37,4 @@ pub fn fetch_image_by_ogp(ogp: &Ogp, dest: &str) {
 pub fn fetch_ogp_data(url_string: String) -> Result<Ogp, curl::Error> {
     let ogp = ogp::get(url_string)?;
     Ok(ogp)
-}
-
-fn create_temp_filename(url: &str) -> String {
-    let mut hasher = DefaultHasher::new();
-    url.hash(&mut hasher);
-    format!("{}", hasher.finish())
 }
