@@ -21,8 +21,8 @@ pub fn fetch_image_by_ogp(ogp: &Ogp, dest: &str) {
         transfer.perform().unwrap();
     }
 
-    let image_name = &ogp.get_image_name();
-    let file_path = format!("{}/{}", dest, image_name);
+    let temp_filename = &ogp.save_file_name;
+    let file_path = format!("{}/{}", dest, temp_filename);
     let mut file = match File::create(file_path) {
         Ok(file) => file,
         Err(why) => panic!("couldn't create {}: {}", dest, why),

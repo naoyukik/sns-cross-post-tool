@@ -1,8 +1,7 @@
+use curl::easy::List;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
-use curl::easy::List;
-use url::Url;
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
     let mut easy = curl::easy::Easy::new();
@@ -30,18 +29,7 @@ pub struct Ogp {
     pub desc: String,
     pub image: String,
     pub url: String,
-}
-
-impl Ogp {
-    pub fn get_image_name(&self) -> String {
-        let url = self.parse_image_to_url_type();
-        let file_name = Path::new(url.as_str()).file_name().unwrap();
-        file_name.to_string_lossy().to_string()
-    }
-
-    fn parse_image_to_url_type(&self) -> Url {
-        Url::parse(&self.image).unwrap()
-    }
+    pub save_file_name: String,
 }
 
 fn extract(html: Vec<u8>) -> Ogp {
@@ -76,6 +64,13 @@ fn extract(html: Vec<u8>) -> Ogp {
             .map(|element| element.value().attr("content").unwrap_or(""))
             .unwrap_or("")
             .to_string(),
+        save_file_name: create_temp_filename(
+            fragment
+                .select(&image_selector)
+                .next()
+                .map(|element| element.value().attr("content").unwrap_or(""))
+                .unwrap_or(""),
+        ),
     }
 }
 
@@ -83,6 +78,15 @@ pub fn get(url: String) -> Result<Ogp, curl::Error> {
     let html = get_html(&url)?;
     let ogp = extract(html);
     Ok(ogp)
+}
+
+fn create_temp_filename(url: &str) -> String {
+    if url.is_empty() {
+        return "".to_string();
+    }
+    let mut hasher = DefaultHasher::new();
+    url.hash(&mut hasher);
+    format!("{}", hasher.finish())
 }
 
 #[cfg(test)]
@@ -119,6 +123,7 @@ mod tests {
         assert_eq!(ogp.desc, "Description of the page.");
         assert_eq!(ogp.image, "https://example.com/sample.jpg");
         assert_eq!(ogp.url, "https://example.com/");
+        assert_eq!(ogp.save_file_name, "17797260336675451874");
     }
 
     #[test]
@@ -133,5 +138,6 @@ mod tests {
         assert_eq!(ogp.desc, "");
         assert_eq!(ogp.image, "");
         assert_eq!(ogp.url, "");
+        assert_eq!(ogp.save_file_name, "");
     }
 }
