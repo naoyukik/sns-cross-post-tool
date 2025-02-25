@@ -1,9 +1,7 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use curl::easy::List;
-use url::Url;
 
 fn get_html(url: &str) -> Result<Vec<u8>, curl::Error> {
     let mut easy = curl::easy::Easy::new();

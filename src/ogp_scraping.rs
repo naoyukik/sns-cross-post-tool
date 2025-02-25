@@ -2,7 +2,6 @@ use crate::ogp;
 use crate::ogp::Ogp;
 use curl::easy::Easy;
 use std::fs::File;
-use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::Write;
 
 pub fn fetch_image_by_ogp(ogp: &Ogp, dest: &str) {
