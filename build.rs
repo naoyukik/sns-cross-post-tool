@@ -5,7 +5,7 @@ fn main() {
             "debug" => "debug",
             "bench" => "info",
             "release" => "info",
-            _ => "info"
+            _ => "info",
         };
         println!("cargo:rustc-env=RUST_LOG={}", log_level);
     }
