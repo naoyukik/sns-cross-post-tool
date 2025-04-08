@@ -9,7 +9,11 @@ use url::Url;
 pub struct MessageRepositoryImpl {}
 
 impl MessageRepository for MessageRepositoryImpl {
-    fn send(access_token: &AccessToken, endpoint: &Url, post_data: &CommitMessage) -> Result<bool, curl::Error> {
+    fn send(
+        access_token: &AccessToken,
+        endpoint: &Url,
+        post_data: &CommitMessage,
+    ) -> Result<bool, curl::Error> {
         let mut curl = Easy::new();
         curl.url(endpoint.as_str())?;
         curl.post(true)?;
@@ -30,11 +34,10 @@ impl MessageRepository for MessageRepositoryImpl {
         let mut response_data = Vec::new();
         {
             let mut transfer = curl.transfer();
-            transfer
-                .write_function(|data| {
-                    response_data.extend_from_slice(data);
-                    Ok(data.len())
-                })?;
+            transfer.write_function(|data| {
+                response_data.extend_from_slice(data);
+                Ok(data.len())
+            })?;
             transfer.perform()?;
         }
         let res_string = String::from_utf8(response_data).expect("Illegal JSON format");
@@ -44,7 +47,10 @@ impl MessageRepository for MessageRepositoryImpl {
 
         if let Some(error_value) = res_json.get("error") {
             let error = error_value.as_str().unwrap_or("Unknown error");
-            let message = res_json.get("message").and_then(|m| m.as_str()).unwrap_or("No message provided");
+            let message = res_json
+                .get("message")
+                .and_then(|m| m.as_str())
+                .unwrap_or("No message provided");
             panic!("Error: {}, Message: {}", error, message);
         }
 

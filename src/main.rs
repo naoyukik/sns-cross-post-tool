@@ -54,7 +54,7 @@ fn main() {
             Receivers::Mastodon => match mPost() {
                 Ok(_) => print!("Mastodon: Message has been sent successfully."),
                 Err(err) => error!("Mastodon: Failed to send the message: {:?}", err),
-            }
+            },
         }
     }
 }
@@ -62,9 +62,9 @@ fn main() {
 // pub fn read_json_file(file_path: &str) -> Result<Message, Error> {
 //     let file = File::open(file_path).expect("File not found");
 //     let reader = BufReader::new(file);
-// 
+//
 //     let json_object: Message = serde_json::from_reader(reader)?;
-// 
+//
 //     Ok(json_object)
 // }
 
@@ -95,16 +95,14 @@ pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
 }
 
 fn set_logger() {
-    env_logger::init_from_env(
-        env_logger::Env::new().filter("RUST_LOG")
-    );
+    env_logger::init_from_env(env_logger::Env::new().filter("RUST_LOG"));
 }
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-    use dotenvy::dotenv;
     use crate::set_logger;
+    use dotenvy::dotenv;
+    use std::env;
 
     #[test]
     fn learn_environments() {

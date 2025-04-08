@@ -9,7 +9,9 @@ use curl::easy::Easy;
 use std::fs;
 
 pub fn create_website_card_embeds(access_token: &AccessToken, ogp: &Ogp) -> Option<Embed> {
-    if ogp.image.is_empty() { return None; }
+    if ogp.image.is_empty() {
+        return None;
+    }
     let dest = "./storage/downloaded_images";
     ogp_scraping::fetch_image_by_ogp(ogp, dest);
     let ogp_image_path = format!("{}/{}", dest, ogp.save_file_name);

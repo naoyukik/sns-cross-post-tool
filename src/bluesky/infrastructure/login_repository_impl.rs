@@ -1,4 +1,3 @@
-
 use crate::bluesky::domain::env::env_repository::EnvRepository;
 use crate::bluesky::domain::login::login_repository::LoginRepository;
 use crate::bluesky::domain::login::model::access_token::AccessToken;
@@ -43,7 +42,10 @@ impl LoginRepository for LoginRepositoryImpl {
 
         if let Some(error_value) = res_json.get("error") {
             let error = error_value.as_str().unwrap_or("Unknown error");
-            let message = res_json.get("message").and_then(|m| m.as_str()).unwrap_or("No message provided");
+            let message = res_json
+                .get("message")
+                .and_then(|m| m.as_str())
+                .unwrap_or("No message provided");
             panic!("Error: {}, Message: {}", error, message);
         }
 

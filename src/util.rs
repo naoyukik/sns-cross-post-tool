@@ -1,10 +1,10 @@
-use std::fs::File;
-use std::io::BufReader;
+use crate::Message;
 use chrono::Utc;
 use curl::easy::List;
 use regex::{Captures, Regex};
 use serde_json::Error;
-use crate::Message;
+use std::fs::File;
+use std::io::BufReader;
 
 pub fn get_current_time() -> String {
     let now = Utc::now();

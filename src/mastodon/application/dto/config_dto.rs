@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::mastodon::application::dto::access_token_dto::AccessTokenDto;
 use crate::mastodon::domain::env::model::config::Config;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConfigDto {

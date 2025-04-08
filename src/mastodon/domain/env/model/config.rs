@@ -1,6 +1,6 @@
+use crate::mastodon::domain::env::model::access_token::AccessToken;
 use serde::{Deserialize, Serialize};
 use url::Url;
-use crate::mastodon::domain::env::model::access_token::AccessToken;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
