@@ -11,6 +11,7 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
-    "danger": "^12.3.4"
+    "danger": "^12.3.4",
+    "keep-a-changelog": "^2.6.2"
   }
 }
