@@ -57,6 +57,8 @@ jobs:
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
 
+          ./node_modules/.bin/changelog --create
+
           git checkout -b $BRANCH
           git commit -am "Changelog update - $VERSION"
           git push --set-upstream origin $BRANCH
