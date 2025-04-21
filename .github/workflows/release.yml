@@ -1,0 +1,73 @@
+name: Release
+on:
+  release:
+    types: [prereleased, released]
+
+jobs:
+  release:
+    name: Publish Plugin
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: false
+          large-packages: false
+
+      - name: Fetch Sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm i --frozen-lockfile
+
+      - name: Export Properties
+        id: properties
+        shell: bash
+        run: |
+          VERSION="$(cat ./Cargo.toml | grep "^version = " | cut -f3- -d ' ' | tr -d '"')"
+          ./node_modules/.bin/changelog --release $VERSION
+          CHANGELOG="$(./node_modules/.bin/changelog --latest-release-full)"
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: ${{ steps.properties.outputs.changelog != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          BRANCH="changelog-update-$VERSION"
+          LABEL="release changelog"
+
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+
+          git checkout -b $BRANCH
+          git commit -am "Changelog update - $VERSION"
+          git push --set-upstream origin $BRANCH
+
+          gh label create "$LABEL" \
+            --description "Pull requests with release changelog update" \
+            --force \
+            || true
+
+          gh pr create \
+            --title "Changelog update - \`$VERSION\`" \
+            --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
+            --label "$LABEL" \
+            --head $BRANCH
