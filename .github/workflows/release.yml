@@ -5,18 +5,12 @@ on:
 
 jobs:
   release:
-    name: Publish Plugin
+    name: Create Release CHANGELOG
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
-        with:
-          tool-cache: false
-          large-packages: false
-
       - name: Fetch Sources
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
