@@ -37,7 +37,7 @@ extern crate env_logger;
 struct Args {
     /// Message to post on social media
     #[arg(short, long)]
-    message: String,
+    message: Option<String>,
 
     /// Execution mode
     #[command(subcommand)]
@@ -51,15 +51,12 @@ enum Command {
 }
 
 fn main() {
-    Args::parse();
-
-    let args: Vec<String> = env::args().collect();
-    let mode: String = if args.len() == 2 {
-        args[1].clone()
-    } else {
-        String::from("")
+    let cli = Args::parse();
+    let command = match cli.command {
+        Command::Send => "send",
     };
-    if mode != "send" {
+
+    if command != "send" {
         exit(0)
     }
 
