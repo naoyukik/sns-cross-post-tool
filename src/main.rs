@@ -24,13 +24,35 @@ use serde::{Deserialize, Serialize};
 
 use std::env;
 
+use clap::{Parser, Subcommand};
 use std::process::exit;
 
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Message to post on social media
+    #[arg(short, long)]
+    message: String,
+
+    /// Execution mode
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Execute the post
+    Send,
+}
+
 fn main() {
+    Args::parse();
+
     let args: Vec<String> = env::args().collect();
     let mode: String = if args.len() == 2 {
         args[1].clone()
