@@ -44,6 +44,12 @@ struct Args {
     command: Command,
 }
 
+impl Args {
+    pub fn message(&self) -> &str {
+        self.message.as_deref().unwrap_or("")
+    }
+}
+
 #[derive(Subcommand, Debug)]
 enum Command {
     /// Execute the post
@@ -51,8 +57,8 @@ enum Command {
 }
 
 fn main() {
-    let cli = Args::parse();
-    let command = match cli.command {
+    let args = Args::parse();
+    let command = match args.command {
         Command::Send => "send",
     };
 
@@ -66,7 +72,7 @@ fn main() {
 
     for receiver in message.receivers {
         match receiver {
-            Receivers::Bluesky => match post() {
+            Receivers::Bluesky => match post(&args) {
                 Ok(_) => print!("Bluesky: Message has been sent successfully."),
                 Err(err) => error!("Bluesky: Failed to send the message: {:?}", err),
             },
