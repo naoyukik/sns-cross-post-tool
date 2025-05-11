@@ -31,7 +31,7 @@ pub fn set_headers(header_list: Vec<String>) -> List {
     headers
 }
 
-pub fn read_json_file(file_path: &str) -> Result<Message, Error> {
+pub fn message_from_json_file(file_path: &str) -> Result<Message, Error> {
     let file = File::open(file_path).expect("File not found");
     let reader = BufReader::new(file);
 

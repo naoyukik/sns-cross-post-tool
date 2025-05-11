@@ -18,7 +18,7 @@ mod util;
 
 use crate::bluesky::presentation::message_resolver::post;
 use crate::mastodon::presentation::message_resolver::post as mPost;
-use crate::util::read_json_file;
+use crate::util::message_from_json_file;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
@@ -68,7 +68,7 @@ fn main() {
 
     set_logger();
 
-    let message = read_json_file("message.json").unwrap();
+    let message = message_from_json_file("message.json").unwrap();
 
     for receiver in message.receivers {
         match receiver {
