@@ -5,14 +5,17 @@ use crate::bluesky::domain::message::model::commit_message::{CommitMessage, Comm
 use crate::bluesky::domain::message::model::post_message::PostMessage;
 use crate::bluesky::domain::website_card_embeds::website_card_embeds_service::create_website_card_embeds;
 use crate::bluesky::infrastructure::env_repository_impl::EnvRepositoryImpl;
-use crate::util::{get_current_time, message_from_json_file};
+use crate::util::{get_current_time, merge_message, message_from_json_file};
 use crate::{ogp_scraping, util};
 
 pub fn set_post_message(access_token: &AccessToken, post_message: &PostMessage) -> CommitMessage {
     let account = EnvRepositoryImpl::get_login_credential("./.env".to_string());
     let message = message_from_json_file("message.json").unwrap();
-    let content_with_fixed_hashtags =
-        format!("{} {}", message.content, message.fixed_hashtags.bluesky);
+    let merged_message = merge_message(&message, post_message);
+    let content_with_fixed_hashtags = format!(
+        "{} {}",
+        merged_message.content, merged_message.fixed_hashtags.bluesky
+    );
     let cloned_content = content_with_fixed_hashtags.clone();
     let facets = create_facets(&cloned_content);
 

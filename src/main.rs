@@ -100,13 +100,13 @@ pub struct Message {
     fixed_hashtags: FixedHashtags,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 struct FixedHashtags {
     mastodon: String,
     bluesky: String,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 enum Receivers {
     Bluesky,
     Mastodon,
