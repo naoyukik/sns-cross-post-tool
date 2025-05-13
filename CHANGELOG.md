@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Added Clap
+- Enable posting messages using CLI arguments to Bluesky
 
 ## [0.1.0] - 2025-04-18
 First version
