@@ -18,36 +18,61 @@ mod util;
 
 use crate::bluesky::presentation::message_resolver::post;
 use crate::mastodon::presentation::message_resolver::post as mPost;
-use crate::util::read_json_file;
+use crate::util::message_from_json_file;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use std::env;
 
+use clap::{Parser, Subcommand};
 use std::process::exit;
 
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Message to post on social media
+    #[arg(short, long)]
+    message: Option<String>,
+
+    /// Execution mode
+    #[command(subcommand)]
+    command: Command,
+}
+
+impl Args {
+    pub fn message(&self) -> &str {
+        self.message.as_deref().unwrap_or("")
+    }
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Execute the post
+    Send,
+}
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let mode: String = if args.len() == 2 {
-        args[1].clone()
-    } else {
-        String::from("")
+    let args = Args::parse();
+    let command = match args.command {
+        Command::Send => "send",
     };
-    if mode != "send" {
+
+    if command != "send" {
         exit(0)
     }
 
     set_logger();
 
-    let message = read_json_file("message.json").unwrap();
+    let message = message_from_json_file("message.json").unwrap();
 
     for receiver in message.receivers {
         match receiver {
-            Receivers::Bluesky => match post() {
+            Receivers::Bluesky => match post(&args) {
                 Ok(_) => print!("Bluesky: Message has been sent successfully."),
                 Err(err) => error!("Bluesky: Failed to send the message: {:?}", err),
             },
@@ -75,13 +100,13 @@ pub struct Message {
     fixed_hashtags: FixedHashtags,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 struct FixedHashtags {
     mastodon: String,
     bluesky: String,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 enum Receivers {
     Bluesky,
     Mastodon,
