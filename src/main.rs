@@ -12,6 +12,11 @@ mod mastodon {
     pub mod presentation;
     pub mod util;
 }
+
+mod shared {
+    pub mod domain;
+}
+
 mod ogp;
 mod ogp_scraping;
 mod util;
@@ -24,6 +29,7 @@ use serde::{Deserialize, Serialize};
 
 use std::env;
 
+use crate::shared::domain::message::model::message_template::Receivers;
 use clap::{Parser, Subcommand};
 use std::process::exit;
 
