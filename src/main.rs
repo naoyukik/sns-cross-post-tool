@@ -98,25 +98,7 @@ fn main() {
 //
 //     Ok(json_object)
 // }
-
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-pub struct Message {
-    content: String,
-    receivers: Vec<Receivers>,
-    fixed_hashtags: FixedHashtags,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-struct FixedHashtags {
-    mastodon: String,
-    bluesky: String,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-enum Receivers {
-    Bluesky,
-    Mastodon,
-}
+//
 
 pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
     let res_string = String::from_utf8(response_data).unwrap();
