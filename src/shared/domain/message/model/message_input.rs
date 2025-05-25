@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PostMessage {
+pub struct MessageInput {
     value: String,
 }
 
-impl PostMessage {
+impl MessageInput {
     pub fn new(value: &str) -> Self {
         Self {
             value: value.to_string(),

@@ -12,6 +12,11 @@ mod mastodon {
     pub mod presentation;
     pub mod util;
 }
+
+mod shared {
+    pub mod domain;
+}
+
 mod ogp;
 mod ogp_scraping;
 mod util;
@@ -24,6 +29,7 @@ use serde::{Deserialize, Serialize};
 
 use std::env;
 
+use crate::shared::domain::message::model::message_template::Receivers;
 use clap::{Parser, Subcommand};
 use std::process::exit;
 
@@ -92,25 +98,7 @@ fn main() {
 //
 //     Ok(json_object)
 // }
-
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-pub struct Message {
-    content: String,
-    receivers: Vec<Receivers>,
-    fixed_hashtags: FixedHashtags,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-struct FixedHashtags {
-    mastodon: String,
-    bluesky: String,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-enum Receivers {
-    Bluesky,
-    Mastodon,
-}
+//
 
 pub fn response_to<T: DeserializeOwned>(response_data: Vec<u8>) -> T {
     let res_string = String::from_utf8(response_data).unwrap();

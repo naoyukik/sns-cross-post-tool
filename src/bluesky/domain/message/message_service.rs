@@ -2,16 +2,19 @@ use crate::bluesky::domain::env::env_repository::EnvRepository;
 use crate::bluesky::domain::login::model::access_token::AccessToken;
 use crate::bluesky::domain::message::facet_service::create_facets;
 use crate::bluesky::domain::message::model::commit_message::{CommitMessage, CommitMessageRecord};
-use crate::bluesky::domain::message::model::post_message::PostMessage;
 use crate::bluesky::domain::website_card_embeds::website_card_embeds_service::create_website_card_embeds;
 use crate::bluesky::infrastructure::env_repository_impl::EnvRepositoryImpl;
+use crate::shared::domain::message::model::message_input::MessageInput;
 use crate::util::{get_current_time, merge_message, message_from_json_file};
 use crate::{ogp_scraping, util};
 
-pub fn set_post_message(access_token: &AccessToken, post_message: &PostMessage) -> CommitMessage {
+pub fn set_post_message(
+    access_token: &AccessToken,
+    message_from_arg: &MessageInput,
+) -> CommitMessage {
     let account = EnvRepositoryImpl::get_login_credential("./.env".to_string());
-    let message = message_from_json_file("message.json").unwrap();
-    let merged_message = merge_message(&message, post_message);
+    let message_from_json = message_from_json_file("message.json").unwrap();
+    let merged_message = merge_message(&message_from_json, message_from_arg);
     let content_with_fixed_hashtags = format!(
         "{} {}",
         merged_message.content, merged_message.fixed_hashtags.bluesky
