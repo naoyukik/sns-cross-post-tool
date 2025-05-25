@@ -5,7 +5,8 @@ use crate::bluesky::domain::message::model::commit_message::{CommitMessage, Comm
 use crate::bluesky::domain::website_card_embeds::website_card_embeds_service::create_website_card_embeds;
 use crate::bluesky::infrastructure::env_repository_impl::EnvRepositoryImpl;
 use crate::shared::domain::message::model::message_input::MessageInput;
-use crate::util::{get_current_time, merge_message, message_from_json_file};
+use crate::shared::domain::time_service::{TimeService, TimeServiceImpl};
+use crate::util::{merge_message, message_from_json_file};
 use crate::{ogp_scraping, util};
 
 pub fn set_post_message(
@@ -30,9 +31,10 @@ pub fn set_post_message(
             embed = create_website_card_embeds(access_token, &ogp);
         }
     }
+    let time_service = TimeServiceImpl;
     let record = CommitMessageRecord {
         text: content_with_fixed_hashtags,
-        created_at: get_current_time(),
+        created_at: time_service.get_current_time(),
         facets,
         _type: "app.bsky.feed.post".to_string(),
         embed,

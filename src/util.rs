@@ -7,11 +7,6 @@ use serde_json::Error;
 use std::fs::File;
 use std::io::BufReader;
 
-pub fn get_current_time() -> String {
-    let now = Utc::now();
-    now.format("%Y-%m-%dT%H:%M:%SZ").to_string()
-}
-
 pub fn find_hash_tags(haystack: &str) -> Vec<Captures> {
     let pattern = r"(^|\s)(#\w*)";
     let regex_pattern = Regex::new(pattern).unwrap();
