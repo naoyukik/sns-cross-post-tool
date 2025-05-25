@@ -1,11 +1,5 @@
-use crate::shared::domain::message::model::message_input::MessageInput;
-use crate::shared::domain::message::model::message_template::MessageTemplate;
-use chrono::Utc;
 use curl::easy::List;
 use regex::{Captures, Regex};
-use serde_json::Error;
-use std::fs::File;
-use std::io::BufReader;
 
 pub fn find_hash_tags(haystack: &str) -> Vec<Captures> {
     let pattern = r"(^|\s)(#\w*)";
@@ -25,30 +19,4 @@ pub fn set_headers(header_list: Vec<String>) -> List {
         headers.append(header.as_str()).unwrap();
     }
     headers
-}
-
-pub fn message_from_json_file(file_path: &str) -> Result<MessageTemplate, Error> {
-    let file = File::open(file_path).expect("File not found");
-    let reader = BufReader::new(file);
-
-    let json_object: MessageTemplate = serde_json::from_reader(reader)?;
-
-    Ok(json_object)
-}
-
-pub fn merge_message(
-    message_from_json: &MessageTemplate,
-    message_from_args: &MessageInput,
-) -> MessageTemplate {
-    let message = if !message_from_args.get_value().trim().is_empty() {
-        message_from_args.get_value()
-    } else {
-        message_from_json.content.as_str()
-    };
-
-    MessageTemplate {
-        content: message.to_string(),
-        receivers: message_from_json.receivers.clone(),
-        fixed_hashtags: message_from_json.fixed_hashtags.clone(),
-    }
 }

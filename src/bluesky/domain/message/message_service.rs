@@ -5,8 +5,8 @@ use crate::bluesky::domain::message::model::commit_message::{CommitMessage, Comm
 use crate::bluesky::domain::website_card_embeds::website_card_embeds_service::create_website_card_embeds;
 use crate::bluesky::infrastructure::env_repository_impl::EnvRepositoryImpl;
 use crate::shared::domain::message::model::message_input::MessageInput;
+use crate::shared::domain::message_service::{MessageService, MessageServiceImpl};
 use crate::shared::domain::time_service::{TimeService, TimeServiceImpl};
-use crate::util::{merge_message, message_from_json_file};
 use crate::{ogp_scraping, util};
 
 pub fn set_post_message(
@@ -14,8 +14,8 @@ pub fn set_post_message(
     message_from_arg: &MessageInput,
 ) -> CommitMessage {
     let account = EnvRepositoryImpl::get_login_credential("./.env".to_string());
-    let message_from_json = message_from_json_file("message.json").unwrap();
-    let merged_message = merge_message(&message_from_json, message_from_arg);
+    let message_from_json = MessageServiceImpl::message_from_json_file("message.json").unwrap();
+    let merged_message = MessageServiceImpl::merge_message(&message_from_json, message_from_arg);
     let content_with_fixed_hashtags = format!(
         "{} {}",
         merged_message.content, merged_message.fixed_hashtags.bluesky
