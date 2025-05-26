@@ -4,10 +4,10 @@ use crate::bluesky::domain::message::facet_service::create_facets;
 use crate::bluesky::domain::message::model::commit_message::{CommitMessage, CommitMessageRecord};
 use crate::bluesky::domain::website_card_embeds::website_card_embeds_service::create_website_card_embeds;
 use crate::bluesky::infrastructure::env_repository_impl::EnvRepositoryImpl;
+use crate::ogp_scraping;
 use crate::shared::domain::message::model::message_input::MessageInput;
 use crate::shared::domain::message_service::{MessageService, MessageServiceImpl};
 use crate::shared::domain::time_service::{TimeService, TimeServiceImpl};
-use crate::{ogp_scraping, util};
 
 pub fn set_post_message(
     access_token: &AccessToken,
@@ -47,7 +47,7 @@ pub fn set_post_message(
 }
 
 fn get_url_string(text: &str) -> String {
-    let matches = util::find_link_string(text);
+    let matches = MessageServiceImpl::find_link_string(text);
     debug!("matches: {:?}", matches);
     let mut url = "";
     for caps in matches {

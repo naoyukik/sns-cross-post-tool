@@ -1,7 +1,7 @@
 use crate::bluesky::domain::message::model::facet::{
     Facet, FacetFeatures, FacetIndex, FeatureMode,
 };
-use crate::util;
+use crate::shared::domain::message_service::{MessageService, MessageServiceImpl};
 use regex::{Match, Regex};
 
 pub fn create_facets(message: &str) -> Vec<Facet> {
@@ -14,7 +14,7 @@ pub fn create_facets(message: &str) -> Vec<Facet> {
 }
 
 fn create_tags_facets(message_content: &str) -> Vec<Facet> {
-    util::find_hash_tags(message_content)
+    MessageServiceImpl::find_hash_tags(message_content)
         .iter()
         .filter_map(|capture| {
             capture
@@ -25,7 +25,7 @@ fn create_tags_facets(message_content: &str) -> Vec<Facet> {
 }
 
 fn create_links_facets(message_content: &str) -> Vec<Facet> {
-    util::find_link_string(message_content)
+    MessageServiceImpl::find_link_string(message_content)
         .iter()
         .filter_map(|capture| {
             capture
