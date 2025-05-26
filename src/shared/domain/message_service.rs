@@ -41,3 +41,85 @@ impl MessageService for MessageServiceImpl {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::shared::domain::message::model::message_input::MessageInput;
+    use crate::shared::domain::message::model::message_template::FixedHashtags;
+    use crate::shared::domain::message::model::message_template::{MessageTemplate, Receivers};
+
+    #[test]
+    fn test_message_from_json_file() {
+        let result = MessageServiceImpl::message_from_json_file(
+            "tests/resources/shared/domain/test_message_from_json_file.json",
+        );
+        assert!(result.is_ok());
+
+        let message_template = result.unwrap();
+        assert_eq!(message_template.content, "Test message content.");
+        assert_eq!(
+            message_template.receivers,
+            vec![Receivers::Bluesky, Receivers::Mastodon]
+        );
+        assert_eq!(message_template.fixed_hashtags.bluesky, "#test_bluesky");
+        assert_eq!(message_template.fixed_hashtags.mastodon, "#test_mastodon");
+    }
+
+    #[test]
+    fn test_merge_message_with_input() {
+        let message_from_json = MessageTemplate {
+            content: "Default message.".to_string(),
+            receivers: vec![Receivers::Bluesky],
+            fixed_hashtags: FixedHashtags {
+                bluesky: "#default_bluesky".to_string(),
+                mastodon: "#default_mastodon".to_string(),
+            },
+        };
+
+        let message_from_args = MessageInput::new("Override message.");
+
+        let merged_message =
+            MessageServiceImpl::merge_message(&message_from_json, &message_from_args);
+
+        assert_eq!(merged_message.content, "Override message.");
+    }
+
+    #[test]
+    fn test_merge_message_without_input() {
+        let message_from_json = MessageTemplate {
+            content: "Default message.".to_string(),
+            receivers: vec![Receivers::Mastodon],
+            fixed_hashtags: FixedHashtags {
+                bluesky: "#default_bluesky".to_string(),
+                mastodon: "#default_mastodon".to_string(),
+            },
+        };
+
+        let message_from_args = MessageInput::new("");
+
+        let merged_message =
+            MessageServiceImpl::merge_message(&message_from_json, &message_from_args);
+
+        assert_eq!(merged_message.content, "Default message.");
+    }
+
+    #[test]
+    fn test_merge_message_with_whitespace_input() {
+        let message_from_json = MessageTemplate {
+            content: "Default message.".to_string(),
+            receivers: vec![Receivers::Mastodon],
+            fixed_hashtags: FixedHashtags {
+                bluesky: "#default_bluesky".to_string(),
+                mastodon: "#default_mastodon".to_string(),
+            },
+        };
+
+        let message_from_args = MessageInput::new("   ");
+
+        let merged_message =
+            MessageServiceImpl::merge_message(&message_from_json, &message_from_args);
+
+        assert_eq!(merged_message.content, "Default message.");
+    }
+}
