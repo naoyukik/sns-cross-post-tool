@@ -4,7 +4,7 @@ use crate::bluesky::domain::website_card_embeds::model::uploaded_image_blob::Upl
 use crate::bluesky::util::http::create_header;
 use crate::ogp::Ogp;
 use crate::ogp_scraping;
-use crate::util::set_headers;
+use crate::shared::domain::http_service::{HttpService, HttpServiceImpl};
 use curl::easy::Easy;
 use std::fs;
 
@@ -35,7 +35,7 @@ fn upload_image_blob(access_token: &AccessToken, file_path: &str) -> UploadedIma
     curl.url(endpoint).unwrap();
     let content_type = "image/png";
     let headers = create_header(access_token, content_type);
-    let mut header_list = set_headers(headers);
+    let mut header_list = HttpServiceImpl::set_headers(headers);
     header_list.append("Accept: application/json").unwrap();
     curl.http_headers(header_list).unwrap();
     curl.post(true).unwrap();

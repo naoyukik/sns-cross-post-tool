@@ -2,7 +2,7 @@ use crate::bluesky::domain::env::env_repository::EnvRepository;
 use crate::bluesky::domain::login::login_repository::LoginRepository;
 use crate::bluesky::domain::login::model::access_token::AccessToken;
 use crate::bluesky::infrastructure::env_repository_impl::EnvRepositoryImpl;
-use crate::util::set_headers;
+use crate::shared::domain::http_service::{HttpService, HttpServiceImpl};
 use curl::easy::Easy;
 
 pub struct LoginRepositoryImpl {}
@@ -14,7 +14,8 @@ impl LoginRepository for LoginRepositoryImpl {
         curl.url("https://bsky.social/xrpc/com.atproto.server.createSession")?;
         curl.post(true)?;
 
-        let headers = set_headers(vec!["Content-Type: application/json".to_string()]);
+        let headers =
+            HttpServiceImpl::set_headers(vec!["Content-Type: application/json".to_string()]);
         curl.http_headers(headers)?;
 
         let post_data = EnvRepositoryImpl::get_login_credential("./.env".to_string());
