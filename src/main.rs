@@ -1,3 +1,6 @@
+extern crate env_logger;
+#[macro_use]
+extern crate log;
 mod bluesky {
     pub mod application;
     pub mod domain;
@@ -19,7 +22,6 @@ mod shared {
 
 mod ogp;
 mod ogp_scraping;
-mod util;
 
 use crate::bluesky::presentation::message_resolver::post;
 use crate::mastodon::presentation::message_resolver::post as mPost;
@@ -29,10 +31,6 @@ use crate::shared::domain::message::model::message_template::Receivers;
 use crate::shared::domain::message_service::{MessageService, MessageServiceImpl};
 use clap::{Parser, Subcommand};
 use std::process::exit;
-
-#[macro_use]
-extern crate log;
-extern crate env_logger;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
