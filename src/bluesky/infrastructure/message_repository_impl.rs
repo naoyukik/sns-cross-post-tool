@@ -2,7 +2,7 @@ use crate::bluesky::domain::login::model::access_token::AccessToken;
 use crate::bluesky::domain::message::message_repository::MessageRepository;
 use crate::bluesky::domain::message::model::commit_message::CommitMessage;
 use crate::bluesky::util::http::create_header;
-use crate::util::set_headers;
+use crate::shared::domain::http_service::{HttpService, HttpServiceImpl};
 use curl::easy::Easy;
 
 pub struct MessageRepositoryImpl {}
@@ -14,7 +14,7 @@ impl MessageRepository for MessageRepositoryImpl {
         curl.post(true)?;
 
         let headers = create_header(access_token, "application/json");
-        let header_list = set_headers(headers);
+        let header_list = HttpServiceImpl::set_headers(headers);
         curl.http_headers(header_list)?;
 
         let binding = serde_json::to_string::<CommitMessage>(post_data).unwrap();

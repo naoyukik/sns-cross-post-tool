@@ -2,7 +2,7 @@ use crate::mastodon::domain::env::model::access_token::AccessToken;
 use crate::mastodon::domain::message::message_repository::MessageRepository;
 use crate::mastodon::domain::message::model::commit_message::CommitMessage;
 use crate::mastodon::util::http::create_header;
-use crate::util::set_headers;
+use crate::shared::domain::http_service::{HttpService, HttpServiceImpl};
 use curl::easy::Easy;
 use url::Url;
 
@@ -20,7 +20,7 @@ impl MessageRepository for MessageRepositoryImpl {
 
         let content_type = "application/json";
         let headers = create_header(access_token, content_type);
-        let header_list = set_headers(headers);
+        let header_list = HttpServiceImpl::set_headers(headers);
         curl.http_headers(header_list)?;
 
         let binding = serde_json::to_string(&post_data).unwrap();
