@@ -77,7 +77,7 @@ fn main() {
                 Ok(_) => print!("Bluesky: Message has been sent successfully."),
                 Err(err) => error!("Bluesky: Failed to send the message: {:?}", err),
             },
-            Receivers::Mastodon => match mPost() {
+            Receivers::Mastodon => match mPost(&args) {
                 Ok(_) => print!("Mastodon: Message has been sent successfully."),
                 Err(err) => error!("Mastodon: Failed to send the message: {:?}", err),
             },
