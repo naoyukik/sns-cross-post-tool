@@ -34,7 +34,7 @@ cargo build
             "receivers": ["Bluesky", "Mastodon"],
             "fixed_hashtags": {
                 "bluesky": "",
-                "mastodon":  "#fedibird"
+                "mastodon":  "#ExampleFixedHashtags"
             }
         }
         ```
@@ -50,6 +50,14 @@ cargo build
         ```
 
     - By specifying the `send` argument, the configured message will be posted to the specified SNS.
+
+   - You can specify a message directly from the command line using the `-m, --message` option:
+
+       ```sh
+       sns-cross-post-tool send --message "Your message content here"
+       ```
+
+   - When the `--message` option is used, it takes precedence over the content in the `message.json` file.
 
 4. Running Tests
     - Execute the following command from the command line:
@@ -96,7 +104,7 @@ cargo build
             "receivers": ["Bluesky", "Mastodon"],
             "fixed_hashtags": {
                 "bluesky": "",
-                "mastodon":  "#fedibird"
+                "mastodon":  "#ExampleFixedHashtags"
             }
         }
         ```
@@ -112,6 +120,14 @@ cargo build
         ```
 
     - `send` 引数を指定することで、設定されたメッセージを指定されたSNSに投稿します。
+
+   - `-m, --message` オプションを使ってコマンドラインから直接メッセージを指定することもできます：
+
+       ```sh
+       sns-cross-post-tool send --message "投稿したいメッセージ内容"
+       ```
+
+   - `--message` オプションが使用された場合、`message.json` ファイルの内容よりも優先されます。
 
 4. テストの実行
     - コマンドラインから以下のコマンドを実行します：
