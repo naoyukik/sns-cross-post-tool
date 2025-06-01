@@ -40,6 +40,9 @@ struct Args {
     #[arg(short, long)]
     message: Option<String>,
 
+    #[arg(short, long, value_delimiter = ',')]
+    receivers: Option<Vec<Receivers>>,
+
     /// Execution mode
     #[command(subcommand)]
     command: Command,
