@@ -52,6 +52,10 @@ impl Args {
     pub fn message(&self) -> &str {
         self.message.as_deref().unwrap_or("")
     }
+
+    pub fn receivers(&self) -> Option<&[Receivers]> {
+        self.receivers.as_deref()
+    }
 }
 
 #[derive(Subcommand, Debug)]
