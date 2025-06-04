@@ -1,3 +1,4 @@
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -13,7 +14,7 @@ pub struct FixedHashtags {
     pub bluesky: String,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ValueEnum)]
 pub enum Receivers {
     Bluesky,
     Mastodon,

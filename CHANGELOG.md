@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Add Receivers to the CLI arguments
+
+## [0.8.0] - 2025-05-29
+### Added
+
 - Added Clap
 - Enable posting messages using CLI arguments to Bluesky and Mastodon
 

@@ -1,5 +1,5 @@
 use crate::shared::domain::message::model::message_input::MessageInput;
-use crate::shared::domain::message::model::message_template::MessageTemplate;
+use crate::shared::domain::message::model::message_template::{MessageTemplate, Receivers};
 use regex::{Captures, Regex};
 use serde_json::Error;
 use std::fs::File;
@@ -11,6 +11,10 @@ pub trait MessageService {
         message_from_json: &MessageTemplate,
         message_from_args: &MessageInput,
     ) -> MessageTemplate;
+    fn merge_receivers(
+        message_from_json: &MessageTemplate,
+        receivers_from_input: Option<&[Receivers]>,
+    ) -> Vec<Receivers>;
     fn find_hash_tags(haystack: &str) -> Vec<Captures>;
     fn find_link_string(haystack: &str) -> Vec<Captures>;
 }
@@ -41,6 +45,16 @@ impl MessageService for MessageServiceImpl {
             content: message.to_string(),
             receivers: message_from_json.receivers.clone(),
             fixed_hashtags: message_from_json.fixed_hashtags.clone(),
+        }
+    }
+
+    fn merge_receivers(
+        message_from_json: &MessageTemplate,
+        receivers_from_input: Option<&[Receivers]>,
+    ) -> Vec<Receivers> {
+        match receivers_from_input {
+            Some(receivers) => receivers.to_vec(),
+            None => message_from_json.receivers.clone(),
         }
     }
 

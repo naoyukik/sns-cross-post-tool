@@ -40,6 +40,9 @@ struct Args {
     #[arg(short, long)]
     message: Option<String>,
 
+    #[arg(short, long, value_delimiter = ',')]
+    receivers: Option<Vec<Receivers>>,
+
     /// Execution mode
     #[command(subcommand)]
     command: Command,
@@ -48,6 +51,10 @@ struct Args {
 impl Args {
     pub fn message(&self) -> &str {
         self.message.as_deref().unwrap_or("")
+    }
+
+    pub fn receivers(&self) -> Option<&[Receivers]> {
+        self.receivers.as_deref()
     }
 }
 
@@ -70,8 +77,10 @@ fn main() {
     set_logger();
 
     let message = MessageServiceImpl::message_from_json_file("message.json").unwrap();
+    let receivers_from_input = args.receivers();
+    let receivers = MessageServiceImpl::merge_receivers(&message, receivers_from_input);
 
-    for receiver in message.receivers {
+    for receiver in receivers {
         match receiver {
             Receivers::Bluesky => match post(&args) {
                 Ok(_) => print!("Bluesky: Message has been sent successfully."),
