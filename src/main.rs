@@ -77,8 +77,10 @@ fn main() {
     set_logger();
 
     let message = MessageServiceImpl::message_from_json_file("message.json").unwrap();
+    let receivers_from_input = args.receivers();
+    let receivers = MessageServiceImpl::merge_receivers(&message, receivers_from_input);
 
-    for receiver in message.receivers {
+    for receiver in receivers {
         match receiver {
             Receivers::Bluesky => match post(&args) {
                 Ok(_) => print!("Bluesky: Message has been sent successfully."),
