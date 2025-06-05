@@ -1,5 +1,5 @@
 {
-  "content": "Test message content.",
+  "content": "Test message content.\n\n#TestMessageContentHashTag",
   "receivers": ["Bluesky", "Mastodon"],
   "fixed_hashtags": {
     "bluesky": "#test_bluesky",
