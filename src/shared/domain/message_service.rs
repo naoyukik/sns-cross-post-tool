@@ -17,6 +17,7 @@ pub trait MessageService {
     ) -> Vec<Receivers>;
     fn find_hash_tags(haystack: &str) -> Vec<Captures>;
     fn find_link_string(haystack: &str) -> Vec<Captures>;
+    fn unescape_newlines(input: &str) -> String; // 新しく追加
 }
 
 pub struct MessageServiceImpl;
@@ -35,14 +36,12 @@ impl MessageService for MessageServiceImpl {
         message_from_json: &MessageTemplate,
         message_from_args: &MessageInput,
     ) -> MessageTemplate {
-        let message = if !message_from_args.get_value().trim().is_empty() {
-            message_from_args.get_value()
-        } else {
-            message_from_json.content.as_str()
-        };
-
         MessageTemplate {
-            content: message.to_string(),
+            content: if !message_from_args.get_value().trim().is_empty() {
+                Self::unescape_newlines(message_from_args.get_value())
+            } else {
+                message_from_json.content.clone()
+            },
             receivers: message_from_json.receivers.clone(),
             fixed_hashtags: message_from_json.fixed_hashtags.clone(),
         }
@@ -68,6 +67,13 @@ impl MessageService for MessageServiceImpl {
         let pattern = r"(^|\s)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))";
         let regex = Regex::new(pattern).unwrap();
         regex.captures_iter(haystack).collect()
+    }
+
+    fn unescape_newlines(input: &str) -> String {
+        input
+            .replace("\\n", "\n")
+            .replace("\\r", "\r")
+            .replace("\\t", "\t")
     }
 }
 
@@ -97,21 +103,20 @@ mod tests {
 
     #[test]
     fn test_merge_message_with_input() {
-        let message_from_json = MessageTemplate {
-            content: "Default message.".to_string(),
-            receivers: vec![Receivers::Bluesky],
-            fixed_hashtags: FixedHashtags {
-                bluesky: "#default_bluesky".to_string(),
-                mastodon: "#default_mastodon".to_string(),
-            },
-        };
+        let message_from_json = MessageServiceImpl::message_from_json_file(
+            "tests/resources/shared/domain/test_message_from_json_file.json",
+        )
+        .unwrap();
 
-        let message_from_args = MessageInput::new("Override message.");
+        let message_from_args = MessageInput::new("Override message.\n\n#override_hashtag");
 
         let merged_message =
             MessageServiceImpl::merge_message(&message_from_json, &message_from_args);
 
-        assert_eq!(merged_message.content, "Override message.");
+        assert_eq!(
+            merged_message.content,
+            "Override message.\n\n#override_hashtag"
+        );
     }
 
     #[test]
