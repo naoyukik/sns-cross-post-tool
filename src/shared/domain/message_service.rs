@@ -1,3 +1,4 @@
+use crate::shared::domain::message::model::merged_message::{FixedHashtags, MergedMessage};
 use crate::shared::domain::message::model::message_input::MessageInput;
 use crate::shared::domain::message::model::message_template::{MessageTemplate, Receivers};
 use regex::{Captures, Regex};
@@ -10,7 +11,7 @@ pub trait MessageService {
     fn merge_message(
         message_from_json: &MessageTemplate,
         message_from_args: &MessageInput,
-    ) -> MessageTemplate;
+    ) -> MergedMessage;
     fn merge_receivers(
         message_from_json: &MessageTemplate,
         receivers_from_input: Option<&[Receivers]>,
@@ -35,15 +36,23 @@ impl MessageService for MessageServiceImpl {
     fn merge_message(
         message_from_json: &MessageTemplate,
         message_from_args: &MessageInput,
-    ) -> MessageTemplate {
-        MessageTemplate {
+    ) -> MergedMessage {
+        MergedMessage {
             content: if !message_from_args.get_value().trim().is_empty() {
                 Self::unescape_newlines(message_from_args.get_value())
             } else {
                 message_from_json.content.clone()
             },
-            receivers: message_from_json.receivers.clone(),
-            fixed_hashtags: message_from_json.fixed_hashtags.clone(),
+            receivers: message_from_json
+                .receivers
+                .clone()
+                .into_iter()
+                .map(|r| r.into())
+                .collect(),
+            fixed_hashtags: FixedHashtags::new(
+                message_from_json.fixed_hashtags.bluesky.as_str(),
+                message_from_json.fixed_hashtags.mastodon.as_str(),
+            ),
         }
     }
 
