@@ -1,9 +1,11 @@
 {
   "content": "Test message",
-  "receivers": ["Bluesky"],
+  "receivers": [
+    "Bluesky",
+    "Mastodon"
+  ],
   "fixed_hashtags": {
     "mastodon":  "",
     "bluesky": ""
   }
 }
-
