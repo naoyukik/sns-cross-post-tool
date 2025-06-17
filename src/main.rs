@@ -43,6 +43,10 @@ struct Args {
     #[arg(short, long, value_delimiter = ',')]
     receivers: Option<Vec<Receivers>>,
 
+    /// Accepts Message file path in JSON format
+    #[arg(long, default_value = "message.json")]
+    message_file_path: Option<String>,
+
     /// Execution mode
     #[command(subcommand)]
     command: Command,
@@ -55,6 +59,10 @@ impl Args {
 
     pub fn receivers(&self) -> Option<&[Receivers]> {
         self.receivers.as_deref()
+    }
+
+    pub fn message_file_path(&self) -> &str {
+        self.message_file_path.as_deref().unwrap_or("")
     }
 }
 
@@ -76,7 +84,7 @@ fn main() {
 
     set_logger();
 
-    let message = MessageServiceImpl::message_from_json_file("message.json").unwrap();
+    let message = MessageServiceImpl::message_from_json_file(args.message_file_path()).unwrap();
     let receivers_from_input = args.receivers();
     let receivers = MessageServiceImpl::merge_receivers(&message, receivers_from_input);
 
