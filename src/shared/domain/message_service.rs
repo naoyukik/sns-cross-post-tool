@@ -1,3 +1,4 @@
+use crate::shared::domain::message::model::fixed_hashtag_input::FixedHashtagInput;
 use crate::shared::domain::message::model::merged_message::{FixedHashtags, MergedMessage};
 use crate::shared::domain::message::model::message_input::MessageInput;
 use crate::shared::domain::message::model::message_template::{MessageTemplate, Receivers};
@@ -11,6 +12,7 @@ pub trait MessageService {
     fn merge_message(
         message_from_json: &MessageTemplate,
         message_from_args: &MessageInput,
+        fixed_hashtag_from_args: &FixedHashtagInput,
     ) -> MergedMessage;
     fn merge_receivers(
         message_from_json: &MessageTemplate,
@@ -36,6 +38,7 @@ impl MessageService for MessageServiceImpl {
     fn merge_message(
         message_from_json: &MessageTemplate,
         message_from_args: &MessageInput,
+        fixed_hashtag_from_args: &FixedHashtagInput,
     ) -> MergedMessage {
         MergedMessage {
             content: if !message_from_args.get_value().trim().is_empty() {
@@ -49,10 +52,22 @@ impl MessageService for MessageServiceImpl {
                 .into_iter()
                 .map(|r| r.into())
                 .collect(),
-            fixed_hashtags: FixedHashtags::new(
-                message_from_json.fixed_hashtags.bluesky.as_str(),
-                message_from_json.fixed_hashtags.mastodon.as_str(),
-            ),
+            fixed_hashtags: FixedHashtags {
+                bluesky: if fixed_hashtag_from_args.bluesky.clone().is_some() {
+                    fixed_hashtag_from_args.bluesky.clone().unwrap().to_string()
+                } else {
+                    message_from_json.fixed_hashtags.bluesky.clone()
+                },
+                mastodon: if fixed_hashtag_from_args.mastodon.clone().is_some() {
+                    fixed_hashtag_from_args
+                        .mastodon
+                        .clone()
+                        .unwrap()
+                        .to_string()
+                } else {
+                    message_from_json.fixed_hashtags.mastodon.clone()
+                },
+            },
         }
     }
 
@@ -119,8 +134,13 @@ mod tests {
 
         let message_from_args = MessageInput::new("Override message.\n\n#override_hashtag");
 
-        let merged_message =
-            MessageServiceImpl::merge_message(&message_from_json, &message_from_args);
+        let fixed_hashtag_from_args =
+            FixedHashtagInput::new(Some("#test_bluesky"), Some("#test_mastodon"));
+        let merged_message = MessageServiceImpl::merge_message(
+            &message_from_json,
+            &message_from_args,
+            &fixed_hashtag_from_args,
+        );
 
         assert_eq!(
             merged_message.content,
@@ -141,8 +161,13 @@ mod tests {
 
         let message_from_args = MessageInput::new("");
 
-        let merged_message =
-            MessageServiceImpl::merge_message(&message_from_json, &message_from_args);
+        let fixed_hashtag_from_args =
+            FixedHashtagInput::new(Some("#default_bluesky"), Some("#default_mastodon"));
+        let merged_message = MessageServiceImpl::merge_message(
+            &message_from_json,
+            &message_from_args,
+            &fixed_hashtag_from_args,
+        );
 
         assert_eq!(merged_message.content, "Default message.");
     }
@@ -160,8 +185,13 @@ mod tests {
 
         let message_from_args = MessageInput::new("   ");
 
-        let merged_message =
-            MessageServiceImpl::merge_message(&message_from_json, &message_from_args);
+        let fixed_hashtag_from_args =
+            FixedHashtagInput::new(Some("#default_bluesky"), Some("#default_mastodon"));
+        let merged_message = MessageServiceImpl::merge_message(
+            &message_from_json,
+            &message_from_args,
+            &fixed_hashtag_from_args,
+        );
 
         assert_eq!(merged_message.content, "Default message.");
     }
