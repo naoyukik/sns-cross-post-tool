@@ -27,6 +27,7 @@ use crate::bluesky::presentation::message_resolver::post;
 use crate::mastodon::presentation::message_resolver::post as mPost;
 use serde::de::DeserializeOwned;
 
+use crate::shared::domain::message::model::fixed_hashtag_input::FixedHashtagInput;
 use crate::shared::domain::message::model::message_input::MessageInput;
 use crate::shared::domain::message::model::message_template::Receivers;
 use crate::shared::domain::message_service::{MessageService, MessageServiceImpl};
@@ -44,6 +45,12 @@ struct Args {
     #[arg(short, long, value_delimiter = ',')]
     receivers: Option<Vec<Receivers>>,
 
+    #[arg(long)]
+    bluesky_fixed_hashtags: Option<String>,
+
+    #[arg(long)]
+    mastodon_fixed_hashtags: Option<String>,
+
     /// Accepts Message file path in JSON format
     #[arg(long, default_value = "message.json")]
     message_file_path: Option<String>,
@@ -60,6 +67,14 @@ impl Args {
 
     pub fn receivers(&self) -> Option<&[Receivers]> {
         self.receivers.as_deref()
+    }
+
+    pub fn bluesky_fixed_hashtags(&self) -> Option<&str> {
+        self.bluesky_fixed_hashtags.as_deref()
+    }
+
+    pub fn mastodon_fixed_hashtags(&self) -> Option<&str> {
+        self.mastodon_fixed_hashtags.as_deref()
     }
 
     pub fn message_file_path(&self) -> &str {
@@ -89,7 +104,12 @@ fn main() {
     let receivers_from_input = args.receivers();
     let receivers = MessageServiceImpl::merge_receivers(&message, receivers_from_input);
     let message_from_input = MessageInput::new(args.message());
-    let merged_message = MessageServiceImpl::merge_message(&message, &message_from_input);
+    let fixed_hashtag_from_input = FixedHashtagInput::new(
+        args.bluesky_fixed_hashtags(),
+        args.mastodon_fixed_hashtags(),
+    );
+    let merged_message =
+        MessageServiceImpl::merge_message(&message, &message_from_input, &fixed_hashtag_from_input);
 
     for receiver in receivers {
         match receiver {
