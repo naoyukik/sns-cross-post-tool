@@ -27,6 +27,7 @@ use crate::bluesky::presentation::message_resolver::post;
 use crate::mastodon::presentation::message_resolver::post as mPost;
 use serde::de::DeserializeOwned;
 
+use crate::shared::domain::message::model::message_input::MessageInput;
 use crate::shared::domain::message::model::message_template::Receivers;
 use crate::shared::domain::message_service::{MessageService, MessageServiceImpl};
 use clap::{Parser, Subcommand};
@@ -87,14 +88,16 @@ fn main() {
     let message = MessageServiceImpl::message_from_json_file(args.message_file_path()).unwrap();
     let receivers_from_input = args.receivers();
     let receivers = MessageServiceImpl::merge_receivers(&message, receivers_from_input);
+    let message_from_input = MessageInput::new(args.message());
+    let merged_message = MessageServiceImpl::merge_message(&message, &message_from_input);
 
     for receiver in receivers {
         match receiver {
-            Receivers::Bluesky => match post(&args) {
+            Receivers::Bluesky => match post(&merged_message) {
                 Ok(_) => print!("Bluesky: Message has been sent successfully."),
                 Err(err) => error!("Bluesky: Failed to send the message: {:?}", err),
             },
-            Receivers::Mastodon => match mPost(&args) {
+            Receivers::Mastodon => match mPost(&merged_message) {
                 Ok(_) => print!("Mastodon: Message has been sent successfully."),
                 Err(err) => error!("Mastodon: Failed to send the message: {:?}", err),
             },
