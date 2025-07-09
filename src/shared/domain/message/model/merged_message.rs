@@ -29,12 +29,3 @@ pub struct FixedHashtags {
     pub mastodon: String,
     pub bluesky: String,
 }
-
-impl FixedHashtags {
-    pub fn new(bluesky: &str, mastodon: &str) -> Self {
-        Self {
-            mastodon: mastodon.to_string(),
-            bluesky: bluesky.to_string(),
-        }
-    }
-}
