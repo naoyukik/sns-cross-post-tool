@@ -5,7 +5,7 @@
     "Mastodon"
   ],
   "fixed_hashtags": {
-    "mastodon":  "",
-    "bluesky": ""
+    "mastodon": "#example",
+    "bluesky": "#example"
   }
 }
