@@ -7,12 +7,7 @@ pub struct ImageRepositoryImpl {}
 
 impl ImageRepository for ImageRepositoryImpl {
     fn compress_and_save_for_social_media(file_path: &str) -> Result<SaveStatus, RusimgError> {
-        let mut rusimg = Self::file_open(file_path)?;
-
-        let policy = ImagePolicy {
-            max_size_bytes: ImagePolicy::max_size_bytes(),
-            supported_formats: vec![ImageFormat::Webp],
-        };
+        let policy = ImagePolicy::social_media_default();
 
         let mut quality = 100.0;
         let min_quality = 10.0;
@@ -20,7 +15,10 @@ impl ImageRepository for ImageRepositoryImpl {
 
         // ファイルをpolicyに従って圧縮する
         loop {
-            Self::compress_for_social_media(&mut rusimg, quality)?;
+            // 画質劣化の累積を防ぐため、ループのたびにファイルを読み込み直す
+            let mut rusimg = Self::file_open(file_path)?;
+
+            Self::compress_for_social_media(&mut rusimg, quality, &policy)?;
             let save_status = Self::save(&mut rusimg)?;
 
             // 保存されたファイルのafter_filesizeを使ってポリシーを満たすか検証
@@ -44,11 +42,26 @@ impl ImageRepositoryImpl {
         RusImg::open(path)
     }
 
-    fn compress_for_social_media(rusimg: &mut RusImg, quality: f32) -> Result<(), RusimgError> {
-        rusimg.convert(&Extension::Webp)?;
+    fn compress_for_social_media(
+        rusimg: &mut RusImg,
+        quality: f32,
+        policy: &ImagePolicy,
+    ) -> Result<(), RusimgError> {
+        // ポリシーに基づいてフォーマットを選択（現在はWebP固定）
+        // 将来的にはpolicy.supported_formatsから選択するロジックが必要かもしれない
+        if policy
+            .supported_formats
+            .iter()
+            .any(|f| matches!(f, ImageFormat::Webp))
+        {
+            rusimg.convert(&Extension::Webp)?;
+        }
+
         let image_size = rusimg.get_image_size()?;
-        if image_size.width > 640 {
-            rusimg.resize(640.0 / image_size.width as f32 * 100.0)?;
+        let max_width = policy.max_width as usize;
+
+        if image_size.width > max_width {
+            rusimg.resize(max_width as f32 / image_size.width as f32 * 100.0)?;
         }
         rusimg.compress(Some(quality))?;
         Ok(())
@@ -62,6 +75,7 @@ impl ImageRepositoryImpl {
 
 #[cfg(test)]
 mod tests {
+    use crate::shared::domain::image::model::image_policy::ImagePolicy;
     use crate::shared::domain::image_repository::ImageRepository;
     use crate::shared::infrastructure::image_repository_impl::ImageRepositoryImpl;
 
@@ -89,8 +103,9 @@ mod tests {
         );
         let mut rusimg = opened_file.unwrap();
         let quality = 100.0;
+        let policy = ImagePolicy::social_media_default();
         let compressed_rusimg =
-            ImageRepositoryImpl::compress_for_social_media(&mut rusimg, quality);
+            ImageRepositoryImpl::compress_for_social_media(&mut rusimg, quality, &policy);
         assert!(compressed_rusimg.is_ok());
     }
 
@@ -100,10 +115,9 @@ mod tests {
             "./tests/resources/shared/infrastructure/Gemini_Generated_Image_compression_test.jpg",
         );
         let mut rusimg = opened_file.unwrap();
-        let extension = rusimg.get_extension();
         let quality = 100.0;
-        let compressed_rusimg =
-            ImageRepositoryImpl::compress_for_social_media(&mut rusimg, quality);
+        let policy = ImagePolicy::social_media_default();
+        let _ = ImageRepositoryImpl::compress_for_social_media(&mut rusimg, quality, &policy);
         let saved_rusimg = ImageRepositoryImpl::save(&mut rusimg);
         assert!(saved_rusimg.is_ok());
     }
