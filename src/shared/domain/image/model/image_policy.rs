@@ -1,5 +1,5 @@
 pub struct ImagePolicy {
-    pub max_size_bytes: usize,
+    pub max_size_bytes: u64,
     pub supported_formats: Vec<ImageFormat>,
 }
 
@@ -10,12 +10,12 @@ pub enum ImageFormat {
 }
 
 impl ImagePolicy {
-    pub fn max_size_bytes() -> usize {
-        const KB: usize = 1024;
+    pub fn max_size_bytes() -> u64 {
+        const KB: u64 = 1024;
         KB * 100 // 100KB
     }
 
-    pub fn validate_size(&self, image_size_bytes: usize) -> bool {
+    pub fn validate_size(&self, image_size_bytes: u64) -> bool {
         image_size_bytes <= self.max_size_bytes
     }
 }
