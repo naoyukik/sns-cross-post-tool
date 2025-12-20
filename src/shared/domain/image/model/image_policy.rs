@@ -39,6 +39,6 @@ mod tests {
             max_size_bytes: ImagePolicy::max_size_bytes(),
             supported_formats: vec![ImageFormat::Jpeg],
         };
-        assert_eq!(policy.validate_size(102400), true);
+        assert!(policy.validate_size(102400));
     }
 }

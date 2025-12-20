@@ -5,6 +5,8 @@ use crate::bluesky::util::http::create_header;
 use crate::ogp::Ogp;
 use crate::ogp_scraping;
 use crate::shared::domain::http_service::{HttpService, HttpServiceImpl};
+use crate::shared::domain::image_repository::ImageRepository;
+use crate::shared::infrastructure::image_repository_impl::ImageRepositoryImpl;
 use curl::easy::Easy;
 use std::fs;
 
@@ -15,7 +17,10 @@ pub fn create_website_card_embeds(access_token: &AccessToken, ogp: &Ogp) -> Opti
     let dest = "./storage/downloaded_images";
     ogp_scraping::fetch_image_by_ogp(ogp, dest);
     let ogp_image_path = format!("{}/{}", dest, ogp.save_file_name);
-    let uploaded_image_blob = upload_image_blob(access_token, ogp_image_path.as_str());
+    let compressed_image =
+        ImageRepositoryImpl::compress_and_save_for_social_media(ogp_image_path.as_str()).unwrap();
+    let path = compressed_image.output_path?.to_string_lossy().to_string();
+    let uploaded_image_blob = upload_image_blob(access_token, path.as_str());
     Some(Embed::new(ogp, &uploaded_image_blob))
 }
 
