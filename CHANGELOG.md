@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Add Receivers to the CLI arguments
 - Add a message.json path to the CLI arguments
+- Implement image compression before uploading
+- Implement functionality to compress images to a width of 640px or less and a file size of 100KB or less
 
 ## [0.8.0] - 2025-05-29
 ### Added
