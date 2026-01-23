@@ -10,7 +10,7 @@ importers:
     devDependencies:
       danger:
         specifier: ^13.0.0
-        version: 13.0.4
+        version: 13.0.5
       keep-a-changelog:
         specifier: ^2.6.2
         version: 2.7.1
@@ -39,8 +39,8 @@ packages:
     resolution: {integrity: sha512-tY/msAuJo6ARbK6SPIxZrPBms3xPbfwBrulZe0Wtr/DIY9lje2HeV1uoebShn6mx7SjCHif6EjMvoREj+gZ+SA==}
     engines: {node: '>= 18'}
 
-  '@octokit/core@5.2.1':
-    resolution: {integrity: sha512-dKYCMuPO1bmrpuogcjQ8z7ICCH3FP6WmxpwC03yjzGfZhj9fTJg6+bS1+UAplekbN2C+M61UNllGOOoAfGCrdQ==}
+  '@octokit/core@5.2.2':
+    resolution: {integrity: sha512-/g2d4sW9nUDJOMz3mabVQvOGhVa4e/BN/Um7yca9Bb2XTzPPnfTWHWQg+IsEYO7M3Vx+EXvaM/I2pJWIMun1bg==}
     engines: {node: '>= 18'}
 
   '@octokit/endpoint@9.0.6':
@@ -137,16 +137,16 @@ packages:
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
-  core-js@3.41.0:
-    resolution: {integrity: sha512-SJ4/EHwS36QMJd6h/Rg+GyR4A5xE0FSI3eZ+iBVpfqf1x0eTSg1smWLHrA+2jQThZSh97fmSgFSU8B61nxosxA==}
+  core-js@3.48.0:
+    resolution: {integrity: sha512-zpEHTy1fjTMZCKLHUZoVeylt9XrzaIN2rbPXEt0k+q7JE5CkCZdo6bNq55bn24a69CH7ErAVLKijxJja4fw+UQ==}
 
-  danger@13.0.4:
-    resolution: {integrity: sha512-IAdQ5nSJyIs4zKj6AN35ixt2B0Ce3WZUm3IFe/CMnL/Op7wV7IGg4D348U0EKNaNPP58QgXbdSk9pM+IXP1QXg==}
+  danger@13.0.5:
+    resolution: {integrity: sha512-XTaUxdKA4JICqt2lnl58jSxl2k9GpX6RrjuI4UOK6lJSiexX1Fmh39aBB/FnAwBCIUEbc5DVz7C8Yr5xoU57Jw==}
     engines: {node: '>=18'}
     hasBin: true
 
-  debug@4.4.0:
-    resolution: {integrity: sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==}
+  debug@4.4.3:
+    resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -197,10 +197,6 @@ packages:
   get-proto@1.0.1:
     resolution: {integrity: sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==}
     engines: {node: '>= 0.4'}
-
-  get-stdin@6.0.0:
-    resolution: {integrity: sha512-jp4tHawyV7+fkkSKyvjuLZswblUtz+SQKzSWnBbii16BuZksJlU1wuBYXY75r+duh/llF1ur6oNwi+2ZzjKZ7g==}
-    engines: {node: '>=4'}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -255,22 +251,19 @@ packages:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
 
-  jsonwebtoken@9.0.2:
-    resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
+  jsonwebtoken@9.0.3:
+    resolution: {integrity: sha512-MT/xP0CrubFRNLNKvxJ2BYfy53Zkm++5bX9dtuPbqAeQpTVe0MQTFhao8+Cp//EmJp244xt6Drw/GVEGCUj40g==}
     engines: {node: '>=12', npm: '>=6'}
 
-  jwa@1.4.1:
-    resolution: {integrity: sha512-qiLX/xhEEFKUAJ6FiBMbes3w9ATzyk5W7Hvzpa/SLYdxNtng+gcurvrI7TbACjIXlsJyr05/S1oUhZrc63evQA==}
+  jwa@2.0.1:
+    resolution: {integrity: sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==}
 
-  jws@3.2.2:
-    resolution: {integrity: sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==}
+  jws@4.0.1:
+    resolution: {integrity: sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==}
 
   keep-a-changelog@2.7.1:
     resolution: {integrity: sha512-uwxVmpiSd2LOT+sffmd+7odV80WLFxe7jUyGLh4K6H3bjnPIlWJ4d/632+13K2WvtRz4NAwak8PPw416hS5NHA==}
     hasBin: true
-
-  lodash.find@4.6.0:
-    resolution: {integrity: sha512-yaRZoAV3Xq28F1iafWN1+a0rflOej93l1DQUejs3SZ41h2O9UJBoS9aueGjPDgAl4B6tPC0NuuchLKaDQQ3Isg==}
 
   lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
@@ -292,9 +285,6 @@ packages:
 
   lodash.isstring@4.0.1:
     resolution: {integrity: sha512-0wJxfxH1wgO3GrbuP+dTTk7op+6L41QCXbGINEmD+ny/G/eCqGzxyCsh7159S+mgDDcoarnBw6PC1PS5+wUGgw==}
-
-  lodash.keys@4.2.0:
-    resolution: {integrity: sha512-J79MkJcp7Df5mizHiVNpjoHXLi4HLjh9VLS/M7lQSGoQ+0oQ+lWEigREkqKyizPB1IawvQLLKY8mzEcm1tkyxQ==}
 
   lodash.mapvalues@4.6.0:
     resolution: {integrity: sha512-JPFqXFeZQ7BfS00H58kClY7SPVeHertPE0lNuCyZ26/XlN8TvakYD7b9bGyNmXbT/D3BbtPAAmq90gPWqLkxlQ==}
@@ -374,8 +364,8 @@ packages:
     resolution: {integrity: sha512-rksPWtoZb2ZpT5OVgtmy0KHVM+Dca3iVwWY9ifwhcexfjebtgjg3wmrUt9PvJ59XIYBcknQeYHD8IAnVlh9lAw==}
     hasBin: true
 
-  qs@6.14.0:
-    resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
+  qs@6.14.1:
+    resolution: {integrity: sha512-4EK3+xJl8Ts67nLYNwqw/dsFVnCf+qR7RgXSK9jEEm9unao3njwMDdmsdvoKBKHzxd7tCYz5e5M+SnMjdtXGQQ==}
     engines: {node: '>=0.6'}
 
   readline-sync@1.4.10:
@@ -396,8 +386,8 @@ packages:
   safe-buffer@5.2.1:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
 
-  semver@7.7.1:
-    resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
+  semver@7.7.3:
+    resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -468,12 +458,12 @@ snapshots:
   '@gitbeaker/core@38.12.1':
     dependencies:
       '@gitbeaker/requester-utils': 38.12.1
-      qs: 6.14.0
+      qs: 6.14.1
       xcase: 2.0.1
 
   '@gitbeaker/requester-utils@38.12.1':
     dependencies:
-      qs: 6.14.0
+      qs: 6.14.1
       xcase: 2.0.1
 
   '@gitbeaker/rest@38.12.1':
@@ -483,7 +473,7 @@ snapshots:
 
   '@octokit/auth-token@4.0.0': {}
 
-  '@octokit/core@5.2.1':
+  '@octokit/core@5.2.2':
     dependencies:
       '@octokit/auth-token': 4.0.0
       '@octokit/graphql': 7.1.1
@@ -506,18 +496,18 @@ snapshots:
 
   '@octokit/openapi-types@24.2.0': {}
 
-  '@octokit/plugin-paginate-rest@11.4.4-cjs.2(@octokit/core@5.2.1)':
+  '@octokit/plugin-paginate-rest@11.4.4-cjs.2(@octokit/core@5.2.2)':
     dependencies:
-      '@octokit/core': 5.2.1
+      '@octokit/core': 5.2.2
       '@octokit/types': 13.10.0
 
-  '@octokit/plugin-request-log@4.0.1(@octokit/core@5.2.1)':
+  '@octokit/plugin-request-log@4.0.1(@octokit/core@5.2.2)':
     dependencies:
-      '@octokit/core': 5.2.1
+      '@octokit/core': 5.2.2
 
-  '@octokit/plugin-rest-endpoint-methods@13.3.2-cjs.1(@octokit/core@5.2.1)':
+  '@octokit/plugin-rest-endpoint-methods@13.3.2-cjs.1(@octokit/core@5.2.2)':
     dependencies:
-      '@octokit/core': 5.2.1
+      '@octokit/core': 5.2.2
       '@octokit/types': 13.10.0
 
   '@octokit/request-error@5.1.1':
@@ -535,10 +525,10 @@ snapshots:
 
   '@octokit/rest@20.1.2':
     dependencies:
-      '@octokit/core': 5.2.1
-      '@octokit/plugin-paginate-rest': 11.4.4-cjs.2(@octokit/core@5.2.1)
-      '@octokit/plugin-request-log': 4.0.1(@octokit/core@5.2.1)
-      '@octokit/plugin-rest-endpoint-methods': 13.3.2-cjs.1(@octokit/core@5.2.1)
+      '@octokit/core': 5.2.2
+      '@octokit/plugin-paginate-rest': 11.4.4-cjs.2(@octokit/core@5.2.2)
+      '@octokit/plugin-request-log': 4.0.1(@octokit/core@5.2.2)
+      '@octokit/plugin-rest-endpoint-methods': 13.3.2-cjs.1(@octokit/core@5.2.2)
 
   '@octokit/types@13.10.0':
     dependencies:
@@ -548,7 +538,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.4.0
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -594,30 +584,27 @@ snapshots:
 
   commander@2.20.3: {}
 
-  core-js@3.41.0: {}
+  core-js@3.48.0: {}
 
-  danger@13.0.4:
+  danger@13.0.5:
     dependencies:
       '@gitbeaker/rest': 38.12.1
       '@octokit/rest': 20.1.2
       async-retry: 1.2.3
       chalk: 2.4.2
       commander: 2.20.3
-      core-js: 3.41.0
-      debug: 4.4.0
+      core-js: 3.48.0
+      debug: 4.4.3
       fast-json-patch: 3.1.1
-      get-stdin: 6.0.0
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
       hyperlinker: 1.0.0
       ini: 5.0.0
       json5: 2.2.3
       jsonpointer: 5.0.1
-      jsonwebtoken: 9.0.2
-      lodash.find: 4.6.0
+      jsonwebtoken: 9.0.3
       lodash.includes: 4.3.0
       lodash.isobject: 3.0.2
-      lodash.keys: 4.2.0
       lodash.mapvalues: 4.6.0
       lodash.memoize: 4.1.2
       memfs-or-file-map-to-github-branch: 1.3.0
@@ -639,7 +626,7 @@ snapshots:
       - encoding
       - supports-color
 
-  debug@4.4.0:
+  debug@4.4.3:
     dependencies:
       ms: 2.1.3
 
@@ -691,8 +678,6 @@ snapshots:
       dunder-proto: 1.0.1
       es-object-atoms: 1.1.1
 
-  get-stdin@6.0.0: {}
-
   gopd@1.2.0: {}
 
   has-flag@2.0.0: {}
@@ -709,14 +694,14 @@ snapshots:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.4.0
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.0
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -732,9 +717,9 @@ snapshots:
 
   jsonpointer@5.0.1: {}
 
-  jsonwebtoken@9.0.2:
+  jsonwebtoken@9.0.3:
     dependencies:
-      jws: 3.2.2
+      jws: 4.0.1
       lodash.includes: 4.3.0
       lodash.isboolean: 3.0.3
       lodash.isinteger: 4.0.4
@@ -743,24 +728,22 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.7.1
+      semver: 7.7.3
 
-  jwa@1.4.1:
+  jwa@2.0.1:
     dependencies:
       buffer-equal-constant-time: 1.0.1
       ecdsa-sig-formatter: 1.0.11
       safe-buffer: 5.2.1
 
-  jws@3.2.2:
+  jws@4.0.1:
     dependencies:
-      jwa: 1.4.1
+      jwa: 2.0.1
       safe-buffer: 5.2.1
 
   keep-a-changelog@2.7.1:
     dependencies:
       '@deno/shim-deno': 0.18.2
-
-  lodash.find@4.6.0: {}
 
   lodash.includes@4.3.0: {}
 
@@ -775,8 +758,6 @@ snapshots:
   lodash.isplainobject@4.0.6: {}
 
   lodash.isstring@4.0.1: {}
-
-  lodash.keys@4.2.0: {}
 
   lodash.mapvalues@4.6.0: {}
 
@@ -836,7 +817,7 @@ snapshots:
       colors: 1.4.0
       minimist: 1.2.8
 
-  qs@6.14.0:
+  qs@6.14.1:
     dependencies:
       side-channel: 1.1.0
 
@@ -850,7 +831,7 @@ snapshots:
 
   safe-buffer@5.2.1: {}
 
-  semver@7.7.1: {}
+  semver@7.7.3: {}
 
   side-channel-list@1.0.0:
     dependencies:
